@@ -1,0 +1,34 @@
+{
+  "df": {
+    "alpha": 1,
+    "contains": 1,
+    "core": 1,
+    "goals": 1,
+    "and": 1,
+    "scope": 1,
+    "miscellany": 1,
+    "unrelated": 1
+  },
+  "docs": {
+    "doc_1754874074370_s5xdkk": {
+      "tf": {
+        "alpha": 1,
+        "contains": 1,
+        "core": 1,
+        "goals": 1,
+        "and": 1,
+        "scope": 1
+      },
+      "len": 6,
+      "meta": {}
+    },
+    "doc_1754874074373_etcfad": {
+      "tf": {
+        "miscellany": 1,
+        "unrelated": 1
+      },
+      "len": 2,
+      "meta": {}
+    }
+  }
+}

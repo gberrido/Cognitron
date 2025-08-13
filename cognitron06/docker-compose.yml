@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  cognitron06-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: cognitron06-server
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - COGNITRON_SECRET_KEY=${COGNITRON_SECRET_KEY:-your-secret-key-change-in-production}
+      - COGNITRON_HOST=0.0.0.0
+      - COGNITRON_PORT=8000
+      - COGNITRON_DEBUG=false
+      - COGNITRON_DATA_DIR=/app/data
+    volumes:
+      - cognitron06_data:/app/data
+      - ./server/src:/app/src:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - cognitron06
+
+  # Optional: Redis for session storage and caching (future enhancement)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: cognitron06-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - cognitron06
+
+  # Optional: PostgreSQL for production database (future enhancement)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: cognitron06-postgres
+  #   environment:
+  #     - POSTGRES_DB=cognitron06
+  #     - POSTGRES_USER=cognitron
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+  #   networks:
+  #     - cognitron06
+
+volumes:
+  cognitron06_data:
+    driver: local
+  # redis_data:
+  #   driver: local
+  # postgres_data:
+  #   driver: local
+
+networks:
+  cognitron06:
+    driver: bridge

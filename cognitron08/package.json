@@ -1,0 +1,17 @@
+{
+  "name": "cognitron08",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "description": "Minimal MemGPT kernel (function-first runTurn)",
+  "scripts": {
+    "test": "node tests/run-tests.mjs"
+  },
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./core/runTurn.js"
+    }
+  }
+}

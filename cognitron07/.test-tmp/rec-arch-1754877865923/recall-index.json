@@ -1,0 +1,49 @@
+{
+  "df": {
+    "i": 2,
+    "love": 1,
+    "pizza": 1,
+    "noted": 1,
+    "your": 1,
+    "preference": 1,
+    "also": 1,
+    "like": 1,
+    "pasta": 1
+  },
+  "docs": {
+    "1": {
+      "tf": {
+        "i": 1,
+        "love": 1,
+        "pizza": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-11T02:04:25.925Z"
+      }
+    },
+    "2": {
+      "tf": {
+        "noted": 1,
+        "your": 1,
+        "preference": 1
+      },
+      "meta": {
+        "role": "assistant",
+        "timestamp": "2025-08-11T02:04:25.927Z"
+      }
+    },
+    "3": {
+      "tf": {
+        "i": 1,
+        "also": 1,
+        "like": 1,
+        "pasta": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-11T02:04:25.927Z"
+      }
+    }
+  }
+}

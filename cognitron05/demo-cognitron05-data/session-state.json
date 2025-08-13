@@ -1,0 +1,11 @@
+{
+  "sessionId": "session-20250807000411-7hhi",
+  "messageIdCounter": 18,
+  "lastActive": "2025-08-07T00:04:27.319Z",
+  "contextTokenCount": 0,
+  "memoryPressureWarning": false,
+  "recursiveSummary": "Previous summary: Previous summary: Previous summary: Previous summary: Previous summary: Previous summary: Previous summary: Conversation history summary:\nuser: Hi! My name is Sarah and I'm a data scientist at Netflix.\n\nRecently evicted:\nassistant: Nice to meet you, Sarah! It must be exciting working as a data scientist at Netflix. I've noted your name and role in my memory.\n\nRecently evicted:\nuser: I'm working on a recommendation system project using collaborative filtering.\n\nRecently evicted:\nassistant: That sounds fascinating! Collaborative filtering is a powerful technique for recommendation systems. I've stored the details of your current project in my archival memory so I can reference it later.\n\nRecently evicted:\nuser: Hi again! How's it going?\n\nRecently evicted:\nassistant: Hello again, Sarah! Great to see you back. I remember you're a data scientist at Netflix. How's your recommendation system project with collaborative filtering coming along?\n\nRecently evicted:\nuser: It's goi...[truncated]",
+  "fifoQueueLength": 10,
+  "workingContextSize": 2,
+  "recallStorageSize": 18
+}

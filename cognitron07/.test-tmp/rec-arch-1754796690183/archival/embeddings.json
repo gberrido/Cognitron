@@ -1,0 +1,28 @@
+{
+  "df": {
+    "pizza": 1,
+    "and": 1,
+    "pasta": 1,
+    "are": 1,
+    "popular": 1,
+    "something": 1,
+    "unrelated": 1
+  },
+  "docs": {
+    "doc_1754796690192_3nc5d8": {
+      "tf": {
+        "pizza": 1,
+        "and": 1,
+        "pasta": 1,
+        "are": 1,
+        "popular": 1
+      }
+    },
+    "doc_1754796690194_eqpteg": {
+      "tf": {
+        "something": 1,
+        "unrelated": 1
+      }
+    }
+  }
+}

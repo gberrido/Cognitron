@@ -1,0 +1,20 @@
+{
+  "df": {
+    "alpha": 1,
+    "contains": 1,
+    "core": 1,
+    "goals": 1
+  },
+  "docs": {
+    "doc_1754848181766_ufp59l": {
+      "tf": {
+        "alpha": 1,
+        "contains": 1,
+        "core": 1,
+        "goals": 1
+      },
+      "len": 4,
+      "meta": {}
+    }
+  }
+}

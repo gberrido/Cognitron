@@ -1,0 +1,64 @@
+{
+  "df": {
+    "my": 1,
+    "name": 2,
+    "is": 1,
+    "carol": 2,
+    "call": 1,
+    "core": 1,
+    "memory": 1,
+    "append": 1,
+    "key": 1,
+    "user": 1,
+    "value": 1,
+    "pause": 1,
+    "nice": 1,
+    "to": 1,
+    "meet": 1,
+    "you": 1,
+    "i": 1,
+    "ve": 1,
+    "noted": 1,
+    "your": 1
+  },
+  "docs": {
+    "1": {
+      "tf": {
+        "my": 1,
+        "name": 1,
+        "is": 1,
+        "carol": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T03:32:00.110Z"
+      }
+    },
+    "2": {
+      "tf": {
+        "call": 1,
+        "core": 1,
+        "memory": 1,
+        "append": 1,
+        "key": 1,
+        "user": 1,
+        "name": 2,
+        "value": 1,
+        "carol": 2,
+        "pause": 1,
+        "nice": 1,
+        "to": 1,
+        "meet": 1,
+        "you": 1,
+        "i": 1,
+        "ve": 1,
+        "noted": 1,
+        "your": 1
+      },
+      "meta": {
+        "role": "assistant",
+        "timestamp": "2025-08-10T03:32:00.113Z"
+      }
+    }
+  }
+}

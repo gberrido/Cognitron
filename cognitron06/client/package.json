@@ -1,0 +1,75 @@
+{
+  "name": "cognitron-sdk",
+  "version": "1.0.0",
+  "description": "Cognitron AI Assistant SDK with CLI - Modular architecture for AI applications",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "cognitron-sdk": "./cognitron-sdk.js",
+    "cognitron": "./cognitron-readline.js",
+    "cognitron-basic": "./cognitron.js",
+    "cognitron-simple": "./simple-cli.js",
+    "cognitron06": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node cognitron-sdk.js chat",
+    "dev": "node cognitron-sdk.js chat --verbose --debug",
+    "legacy:start": "node cognitron-readline.js chat",
+    "legacy:dev": "node cognitron-readline.js chat --verbose",
+    "legacy:basic": "node cognitron.js chat",
+    "legacy:simple": "node simple-cli.js",
+    "test": "node --test tests/*.test.js",
+    "lint": "eslint src/",
+    "build": "echo 'No build step required for Node.js SDK'"
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "sdk",
+    "cli",
+    "cognitron",
+    "memgpt",
+    "groq",
+    "chat",
+    "memory",
+    "llm"
+  ],
+  "author": "Cognitron Team",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.js",
+    "./sdk": "./src/core/CognitronSDK.js",
+    "./cli": "./src/cli/CognitronCLI.js",
+    "./auth": "./src/core/auth/AuthModule.js",
+    "./chat": "./src/core/chat/ChatModule.js",
+    "./memory": "./src/core/memory/MemoryModule.js",
+    "./models": "./src/core/models/ModelsModule.js",
+    "./config": "./src/core/config/ConfigModule.js",
+    "./ui": "./src/cli/ui/UIRenderer.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "axios": "^1.6.2",
+    "ws": "^8.14.2",
+    "marked": "^11.1.1",
+    "marked-terminal": "^6.2.0",
+    "readline": "^1.3.0",
+    "ora": "^7.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/cognitron-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/cognitron-sdk/issues"
+  },
+  "homepage": "https://github.com/your-org/cognitron-sdk#readme"
+}

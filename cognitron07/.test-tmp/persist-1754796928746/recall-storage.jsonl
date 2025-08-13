@@ -1,0 +1,2 @@
+{"id":1,"role":"user","content":"My name is Carol","timestamp":"2025-08-10T03:35:28.753Z"}
+{"id":2,"role":"assistant","content":"CALL core_memory_append {\"key\":\"user_name\",\"value\":\"Carol\"}\nPAUSE: Nice to meet you Carol! I\\'ve noted your name.","timestamp":"2025-08-10T03:35:28.756Z"}

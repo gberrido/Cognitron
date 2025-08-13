@@ -1,0 +1,35 @@
+{
+  "name": "cognitron",
+  "version": "1.0.0",
+  "description": "A CLI chat agent powered by Groq and OpenAI GPT-OSS-120B",
+  "main": "cognitron04.js",
+  "type": "module",
+  "bin": {
+    "cognitron": "./cognitron04.js"
+  },
+  "scripts": {
+    "start": "node cognitron04.js",
+    "test07": "node cognitron07/tests/run-tests.mjs",
+    "dev": "node cognitron04.js chat --reasoning",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"No linter configured\" && exit 0"
+  },
+  "keywords": [
+    "cli",
+    "chat",
+    "ai",
+    "groq",
+    "gpt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "groq-sdk": "^0.7.0",
+    "marked": "^16.1.2",
+    "openai": "^5.12.0",
+    "readline": "^1.3.0",
+    "together-ai": "^0.3.0"
+  }
+}

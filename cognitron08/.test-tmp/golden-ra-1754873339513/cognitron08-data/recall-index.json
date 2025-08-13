@@ -1,0 +1,48 @@
+{
+  "df": {
+    "alpha": 2,
+    "project": 1,
+    "kickoff": 1,
+    "noted": 1,
+    "details": 1,
+    "beta": 1,
+    "unrelated": 1
+  },
+  "docs": {
+    "1": {
+      "tf": {
+        "alpha": 1,
+        "project": 1,
+        "kickoff": 1
+      },
+      "len": 3,
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-11T00:48:59.520Z"
+      }
+    },
+    "2": {
+      "tf": {
+        "noted": 1,
+        "alpha": 1,
+        "details": 1
+      },
+      "len": 3,
+      "meta": {
+        "role": "assistant",
+        "timestamp": "2025-08-11T00:48:59.520Z"
+      }
+    },
+    "3": {
+      "tf": {
+        "beta": 1,
+        "unrelated": 1
+      },
+      "len": 2,
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-11T00:48:59.520Z"
+      }
+    }
+  }
+}

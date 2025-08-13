@@ -1,0 +1,18 @@
+{
+  "id": "test-1754720110867",
+  "persona": {
+    "name": "MemGPT",
+    "role": "Helpful assistant with hierarchical memory",
+    "style": "Concise, friendly, transparent about memory actions"
+  },
+  "user": {
+    "name": "Testy",
+    "preferences": {},
+    "facts": [
+      "likes strawberries and coffee"
+    ]
+  },
+  "notes": "Use recall and archival storage to manage context. Keep summaries concise.\nTest note A\n[replace] {\"old\":\"Test note A\",\"new\":\"Note A updated\"}",
+  "created_at": "2025-08-09T06:15:10.868Z",
+  "updated_at": "2025-08-09T06:15:10.875Z"
+}

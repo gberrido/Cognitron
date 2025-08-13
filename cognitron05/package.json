@@ -1,0 +1,40 @@
+{
+  "name": "cognitron05",
+  "version": "1.0.0",
+  "description": "AI Assistant with MemGPT-inspired stateful long-term memory",
+  "main": "cognitron05.js",
+  "type": "module",
+  "bin": {
+    "cognitron05": "./cognitron05.js"
+  },
+  "scripts": {
+    "start": "node cognitron05.js",
+    "chat": "node cognitron05.js chat",
+    "status": "node cognitron05.js status",
+    "reset": "node cognitron05.js reset",
+    "dev": "node cognitron05.js chat --reasoning high --show-usage --debug",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"No linter configured\" && exit 0"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "chat",
+    "memgpt",
+    "memory",
+    "stateful",
+    "groq",
+    "gpt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "groq-sdk": "^0.7.0",
+    "together-ai": "^0.8.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

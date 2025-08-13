@@ -1,0 +1,230 @@
+{
+  "df": {
+    "13": 1,
+    "14": 1,
+    "15": 1,
+    "16": 1,
+    "17": 1,
+    "18": 1,
+    "19": 1,
+    "20": 1,
+    "21": 1,
+    "22": 1,
+    "23": 1,
+    "24": 1,
+    "25": 1,
+    "26": 1,
+    "27": 1,
+    "28": 1,
+    "29": 1,
+    "msg": 17,
+    "xxxxxxxxxxxxxxxxxxxx": 17,
+    "final": 1,
+    "input": 1,
+    "to": 1,
+    "enforce": 1,
+    "budgets": 1
+  },
+  "docs": {
+    "14": {
+      "tf": {
+        "13": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "15": {
+      "tf": {
+        "14": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "16": {
+      "tf": {
+        "15": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "17": {
+      "tf": {
+        "16": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "18": {
+      "tf": {
+        "17": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "19": {
+      "tf": {
+        "18": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "20": {
+      "tf": {
+        "19": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "21": {
+      "tf": {
+        "20": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "22": {
+      "tf": {
+        "21": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "23": {
+      "tf": {
+        "22": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "24": {
+      "tf": {
+        "23": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "25": {
+      "tf": {
+        "24": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "26": {
+      "tf": {
+        "25": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "27": {
+      "tf": {
+        "26": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "28": {
+      "tf": {
+        "27": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "29": {
+      "tf": {
+        "28": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "30": {
+      "tf": {
+        "29": 1,
+        "msg": 1,
+        "xxxxxxxxxxxxxxxxxxxx": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    },
+    "31": {
+      "tf": {
+        "final": 1,
+        "input": 1,
+        "to": 1,
+        "enforce": 1,
+        "budgets": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-10T09:10:26.625Z"
+      }
+    }
+  }
+}

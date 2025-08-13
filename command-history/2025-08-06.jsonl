@@ -1,0 +1,42 @@
+{"command":"ls","args":[],"full_command":"ls","category":"read_only","timestamp":"2025-08-06T16:31:17.564Z","status":"attempting"}
+{"command":"ls","args":[],"full_command":"ls","category":"read_only","timestamp":"2025-08-06T16:31:17.879Z","status":"success","execution_time_ms":314,"stdout_length":301,"stderr_length":0}
+{"command":"pwd","args":[],"full_command":"pwd","category":"read_only","timestamp":"2025-08-06T16:31:31.963Z","status":"attempting"}
+{"command":"pwd","args":[],"full_command":"pwd","category":"read_only","timestamp":"2025-08-06T16:31:32.157Z","status":"success","execution_time_ms":192,"stdout_length":34,"stderr_length":0}
+{"command":"pwd","args":[],"full_command":"pwd","category":"read_only","timestamp":"2025-08-06T16:31:41.983Z","status":"attempting"}
+{"command":"pwd","args":[],"full_command":"pwd","category":"read_only","timestamp":"2025-08-06T16:31:42.154Z","status":"success","execution_time_ms":171,"stdout_length":34,"stderr_length":0}
+{"command":"ls","args":[],"full_command":"ls","category":"read_only","timestamp":"2025-08-06T16:32:13.065Z","status":"attempting"}
+{"command":"ls","args":[],"full_command":"ls","category":"read_only","timestamp":"2025-08-06T16:32:13.322Z","status":"success","execution_time_ms":257,"stdout_length":301,"stderr_length":0}
+{"command":"ls","args":["\\*.md"],"full_command":"ls \\*.md","category":"read_only","timestamp":"2025-08-06T16:35:19.271Z","status":"attempting"}
+{"command":"ls","args":["\\*.md"],"full_command":"ls \\*.md","category":"read_only","timestamp":"2025-08-06T16:35:19.537Z","status":"error","execution_time_ms":265,"error":"Command failed: ls \\*.md\nls: *.md: No such file or directory\n"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:36:17.570Z","status":"attempting"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:36:17.877Z","status":"success","execution_time_ms":307,"stdout_length":144,"stderr_length":0}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:36:31.593Z","status":"attempting"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:36:31.907Z","status":"success","execution_time_ms":313,"stdout_length":144,"stderr_length":0}
+{"command":"find","args":[".","-type","f","-name","*.js"],"full_command":"find . -type f -name *.js","category":"read_only","timestamp":"2025-08-06T16:37:03.001Z","status":"attempting"}
+{"command":"find","args":[".","-type","f","-name","*.js"],"full_command":"find . -type f -name *.js","category":"read_only","timestamp":"2025-08-06T16:37:03.427Z","status":"error","execution_time_ms":425,"error":"Command failed: find . -type f -name *.js\nfind: cognitron01.js: unknown primary or operator\n"}
+{"command":"find","args":[".","-type","f","-name","*.js"],"full_command":"find . -type f -name \"*.js\"","category":"read_only","timestamp":"2025-08-06T16:37:32.392Z","status":"attempting"}
+{"command":"find","args":[".","-type","f","-name","*.js"],"full_command":"find . -type f -name \"*.js\"","category":"read_only","timestamp":"2025-08-06T16:37:32.710Z","status":"success","execution_time_ms":317,"stdout_length":12116,"stderr_length":0}
+{"command":"ls","args":["-1","cognitron*.js"],"full_command":"ls -1 cognitron*.js","category":"read_only","timestamp":"2025-08-06T16:37:40.532Z","status":"attempting"}
+{"command":"ls","args":["-1","cognitron*.js"],"full_command":"ls -1 cognitron*.js","category":"read_only","timestamp":"2025-08-06T16:37:40.819Z","status":"success","execution_time_ms":287,"stdout_length":75,"stderr_length":0}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:38:27.813Z","status":"attempting"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:38:28.087Z","status":"success","execution_time_ms":274,"stdout_length":144,"stderr_length":0}
+{"command":"pwd","args":[],"full_command":"pwd","category":"read_only","timestamp":"2025-08-06T16:38:43.979Z","status":"attempting"}
+{"command":"pwd","args":[],"full_command":"pwd","category":"read_only","timestamp":"2025-08-06T16:38:44.195Z","status":"success","execution_time_ms":214,"stdout_length":34,"stderr_length":0}
+{"command":"lscpu","args":[],"full_command":"lscpu","category":"read_only","timestamp":"2025-08-06T16:42:12.165Z","status":"attempting"}
+{"command":"lscpu","args":[],"full_command":"lscpu","category":"read_only","timestamp":"2025-08-06T16:42:12.347Z","status":"error","execution_time_ms":181,"error":"Command failed: lscpu\n/bin/sh: lscpu: command not found\n"}
+{"command":"system_profiler","args":["SPHardwareDataType"],"full_command":"system_profiler SPHardwareDataType","category":"read_only","timestamp":"2025-08-06T16:42:19.680Z","status":"attempting"}
+{"command":"system_profiler","args":["SPHardwareDataType"],"full_command":"system_profiler SPHardwareDataType","category":"read_only","timestamp":"2025-08-06T16:42:20.510Z","status":"success","execution_time_ms":830,"stdout_length":635,"stderr_length":0}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:43:45.168Z","status":"attempting"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:43:45.420Z","status":"success","execution_time_ms":251,"stdout_length":144,"stderr_length":0}
+{"command":"lscpu","args":[],"full_command":"lscpu","category":"read_only","timestamp":"2025-08-06T16:44:17.591Z","status":"attempting"}
+{"command":"lscpu","args":[],"full_command":"lscpu","category":"read_only","timestamp":"2025-08-06T16:44:17.765Z","status":"error","execution_time_ms":174,"error":"Command failed: lscpu\n/bin/sh: lscpu: command not found\n"}
+{"command":"cat","args":["/proc/cpuinfo"],"full_command":"cat /proc/cpuinfo","category":"read_only","timestamp":"2025-08-06T16:44:25.113Z","status":"attempting"}
+{"command":"cat","args":["/proc/cpuinfo"],"full_command":"cat /proc/cpuinfo","category":"read_only","timestamp":"2025-08-06T16:44:25.366Z","status":"error","execution_time_ms":253,"error":"Command failed: cat /proc/cpuinfo\ncat: /proc/cpuinfo: No such file or directory\n"}
+{"command":"uname","args":["-a"],"full_command":"uname -a","category":"read_only","timestamp":"2025-08-06T16:44:28.697Z","status":"attempting"}
+{"command":"uname","args":["-a"],"full_command":"uname -a","category":"read_only","timestamp":"2025-08-06T16:44:28.952Z","status":"success","execution_time_ms":255,"stdout_length":126,"stderr_length":0}
+{"command":"sensors","args":[],"full_command":"sensors","category":"unknown","timestamp":"2025-08-06T16:47:06.233Z","status":"attempting"}
+{"command":"sensors","args":[],"full_command":"sensors","category":"unknown","timestamp":"2025-08-06T16:47:06.455Z","status":"error","execution_time_ms":187,"error":"Command failed: sensors\n/bin/sh: sensors: command not found\n"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:49:17.307Z","status":"attempting"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:49:17.568Z","status":"success","execution_time_ms":260,"stdout_length":144,"stderr_length":0}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:52:34.089Z","status":"attempting"}
+{"command":"ls","args":["*.md"],"full_command":"ls *.md","category":"read_only","timestamp":"2025-08-06T16:52:34.346Z","status":"success","execution_time_ms":257,"stdout_length":144,"stderr_length":0}

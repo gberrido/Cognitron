@@ -1,0 +1,4 @@
+{
+  "recursiveSummary": "CALL core_memory_append {\"key\":\"user_name\",\"value\":\"Alice\"}\nPAUSE: Nice to meet you Alice! I\\'ve noted your name.",
+  "lastUpdated": "2025-08-10T09:10:10.699Z"
+}

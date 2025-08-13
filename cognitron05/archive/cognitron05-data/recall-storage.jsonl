@@ -1,0 +1,126 @@
+{"id":0,"timestamp":"2025-08-06T23:58:31.740Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello"}
+{"id":1,"timestamp":"2025-08-06T23:58:32.088Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"Hello! How can I assist you today?"}
+{"id":2,"timestamp":"2025-08-06T23:59:03.056Z","sessionId":"session-20250806235656-r183","role":"user","content":"my name is william"}
+{"id":3,"timestamp":"2025-08-06T23:59:03.721Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"Nice to meet you, William! How can I help you today?"}
+{"id":4,"timestamp":"2025-08-07T00:25:19.418Z","sessionId":"session-20250806235656-r183","role":"user","content":"what do you have in memory?"}
+{"id":5,"timestamp":"2025-08-07T00:25:20.558Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"I’m currently holding a small **working‑context** that includes the key facts I’ve learned about you and our recent conversation. Right now it contains:\n\n- **user_name:** William  \n- Any recent details you’ve shared in this session (e.g., topics we’ve discussed, preferences you’ve expressed).\n\nIn addition, I maintain:\n\n- **Conversation History:** a short‑term log of the last few messages for quick reference.  \n- **Archival Storage:** a longer‑term, searchable repository where I can store more complex or long‑lasting information (e.g., detailed notes, project data) for future retrieval.\n\nIf you want me to remember something specific (a preference, a project detail, etc.), just let me know and I’ll add it to the appropriate memory store."}
+{"id":6,"timestamp":"2025-08-07T19:36:00.278Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message for modular architecture"}
+{"id":7,"timestamp":"2025-08-07T19:49:34.208Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello"}
+{"id":8,"timestamp":"2025-08-07T19:49:35.217Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"Hello again! It looks like you’re testing the modular setup—everything’s working fine. Let me know if there’s anything specific you’d like to try or any information you’d like me to remember."}
+{"id":9,"timestamp":"2025-08-07T21:15:43.566Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 0","testData":true}
+{"id":10,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 1","testData":true}
+{"id":11,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 2","testData":true}
+{"id":12,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 3","testData":true}
+{"id":13,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 4","testData":true}
+{"id":14,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 5","testData":true}
+{"id":15,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 6","testData":true}
+{"id":16,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 7","testData":true}
+{"id":17,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 8","testData":true}
+{"id":18,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 9","testData":true}
+{"id":19,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 10","testData":true}
+{"id":20,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 11","testData":true}
+{"id":21,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 12","testData":true}
+{"id":22,"timestamp":"2025-08-07T21:15:43.567Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 13","testData":true}
+{"id":23,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 14","testData":true}
+{"id":24,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 15","testData":true}
+{"id":25,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 16","testData":true}
+{"id":26,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 17","testData":true}
+{"id":27,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 18","testData":true}
+{"id":28,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 19","testData":true}
+{"id":29,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 20","testData":true}
+{"id":30,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 21","testData":true}
+{"id":31,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 22","testData":true}
+{"id":32,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 23","testData":true}
+{"id":33,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 24","testData":true}
+{"id":34,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 25","testData":true}
+{"id":35,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 26","testData":true}
+{"id":36,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 27","testData":true}
+{"id":37,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 28","testData":true}
+{"id":38,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 29","testData":true}
+{"id":39,"timestamp":"2025-08-07T21:15:43.568Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 30","testData":true}
+{"id":40,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 31","testData":true}
+{"id":41,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 32","testData":true}
+{"id":42,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 33","testData":true}
+{"id":43,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 34","testData":true}
+{"id":44,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 35","testData":true}
+{"id":45,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 36","testData":true}
+{"id":46,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 37","testData":true}
+{"id":47,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 38","testData":true}
+{"id":48,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 39","testData":true}
+{"id":49,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 40","testData":true}
+{"id":50,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 41","testData":true}
+{"id":51,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 42","testData":true}
+{"id":52,"timestamp":"2025-08-07T21:15:43.569Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 43","testData":true}
+{"id":53,"timestamp":"2025-08-07T21:15:43.570Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 44","testData":true}
+{"id":54,"timestamp":"2025-08-07T21:15:43.570Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 45","testData":true}
+{"id":55,"timestamp":"2025-08-07T21:15:43.570Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 46","testData":true}
+{"id":56,"timestamp":"2025-08-07T21:15:43.570Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 47","testData":true}
+{"id":57,"timestamp":"2025-08-07T21:15:43.570Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 48","testData":true}
+{"id":58,"timestamp":"2025-08-07T21:15:43.570Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 49","testData":true}
+{"id":59,"timestamp":"2025-08-07T21:15:57.111Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 0","testData":true}
+{"id":60,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 1","testData":true}
+{"id":61,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 2","testData":true}
+{"id":62,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 3","testData":true}
+{"id":63,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 4","testData":true}
+{"id":64,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 5","testData":true}
+{"id":65,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 6","testData":true}
+{"id":66,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 7","testData":true}
+{"id":67,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 8","testData":true}
+{"id":68,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 9","testData":true}
+{"id":69,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 10","testData":true}
+{"id":70,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 11","testData":true}
+{"id":71,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 12","testData":true}
+{"id":72,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 13","testData":true}
+{"id":73,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 14","testData":true}
+{"id":74,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 15","testData":true}
+{"id":75,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 16","testData":true}
+{"id":76,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 17","testData":true}
+{"id":77,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 18","testData":true}
+{"id":78,"timestamp":"2025-08-07T21:15:57.112Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 19","testData":true}
+{"id":79,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 20","testData":true}
+{"id":80,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 21","testData":true}
+{"id":81,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 22","testData":true}
+{"id":82,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 23","testData":true}
+{"id":83,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 24","testData":true}
+{"id":84,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 25","testData":true}
+{"id":85,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 26","testData":true}
+{"id":86,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 27","testData":true}
+{"id":87,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 28","testData":true}
+{"id":88,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 29","testData":true}
+{"id":89,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 30","testData":true}
+{"id":90,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 31","testData":true}
+{"id":91,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 32","testData":true}
+{"id":92,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 33","testData":true}
+{"id":93,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 34","testData":true}
+{"id":94,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 35","testData":true}
+{"id":95,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 36","testData":true}
+{"id":96,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 37","testData":true}
+{"id":97,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 38","testData":true}
+{"id":98,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 39","testData":true}
+{"id":99,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 40","testData":true}
+{"id":100,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 41","testData":true}
+{"id":101,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 42","testData":true}
+{"id":102,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 43","testData":true}
+{"id":103,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 44","testData":true}
+{"id":104,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 45","testData":true}
+{"id":105,"timestamp":"2025-08-07T21:15:57.113Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 46","testData":true}
+{"id":106,"timestamp":"2025-08-07T21:15:57.114Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 47","testData":true}
+{"id":107,"timestamp":"2025-08-07T21:15:57.114Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 48","testData":true}
+{"id":108,"timestamp":"2025-08-07T21:15:57.114Z","sessionId":"session-20250806235656-r183","role":"user","content":"Test message 49","testData":true}
+{"id":109,"timestamp":"2025-08-08T02:44:00.096Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello"}
+{"id":110,"timestamp":"2025-08-08T02:44:00.110Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"I'm experiencing technical difficulties connecting to my language service. While I work to resolve this, is there anything else I can help you with?\n\n(This happened while primary_response)"}
+{"id":111,"timestamp":"2025-08-08T02:44:20.843Z","sessionId":"session-20250806235656-r183","role":"user","content":"i am testing th cli"}
+{"id":112,"timestamp":"2025-08-08T02:44:20.846Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"I'm experiencing technical difficulties connecting to my language service. While I work to resolve this, is there anything else I can help you with?\n\n(This happened while primary_response)"}
+{"id":113,"timestamp":"2025-08-08T03:09:19.128Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello"}
+{"id":114,"timestamp":"2025-08-08T03:09:19.137Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"I'm experiencing technical difficulties connecting to my language service. While I work to resolve this, is there anything else I can help you with?\n\n(This happened while primary_response)"}
+{"id":115,"timestamp":"2025-08-08T03:26:52.352Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello"}
+{"id":116,"timestamp":"2025-08-08T03:26:52.362Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"I'm experiencing technical difficulties connecting to my language service. While I work to resolve this, is there anything else I can help you with?\n\n(This happened while primary_response)"}
+{"id":117,"timestamp":"2025-08-08T03:30:30.748Z","sessionId":"session-20250806235656-r183","role":"user","content":"Say hello!"}
+{"id":118,"timestamp":"2025-08-08T03:30:30.757Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"I'm experiencing technical difficulties connecting to my language service. While I work to resolve this, is there anything else I can help you with?\n\n(This happened while primary_response)"}
+{"id":119,"timestamp":"2025-08-08T03:32:46.642Z","sessionId":"session-20250806235656-r183","role":"user","content":"Say hello!"}
+{"id":120,"timestamp":"2025-08-08T03:33:49.056Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello, testing the fix"}
+{"id":121,"timestamp":"2025-08-08T03:33:49.498Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"Hello, William! 👋 How can I assist you today?"}
+{"id":122,"timestamp":"2025-08-08T03:35:16.986Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello"}
+{"id":123,"timestamp":"2025-08-08T03:35:17.448Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"Hello, William! How can I help you today?"}
+{"id":124,"timestamp":"2025-08-08T03:37:35.364Z","sessionId":"session-20250806235656-r183","role":"user","content":"hello?"}
+{"id":125,"timestamp":"2025-08-08T03:38:59.646Z","sessionId":"session-20250806235656-r183","role":"assistant","content":"Hello again, William! How can I help you today?"}

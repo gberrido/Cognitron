@@ -1,0 +1,32 @@
+{
+  "df": {
+    "hi": 1,
+    "there": 1,
+    "i": 1,
+    "love": 1,
+    "pizza": 1
+  },
+  "docs": {
+    "2": {
+      "tf": {
+        "hi": 1,
+        "there": 1
+      },
+      "meta": {
+        "role": "assistant",
+        "timestamp": "2025-08-11T02:04:26.507Z"
+      }
+    },
+    "3": {
+      "tf": {
+        "i": 1,
+        "love": 1,
+        "pizza": 1
+      },
+      "meta": {
+        "role": "user",
+        "timestamp": "2025-08-11T02:04:26.507Z"
+      }
+    }
+  }
+}

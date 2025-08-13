@@ -1,0 +1,1292 @@
+#!/usr/bin/env node
+
+/**
+ * Cognitron05 MemGPT - Hybrid Provider Version
+ * Manual switching between Groq and Together AI with /provider command
+ * Self-contained, no modular complexity
+ */
+
+import { Command } from 'commander';
+import readline from 'readline';
+import fs from 'fs/promises';
+import path from 'path';
+import chalk from 'chalk';
+import { Groq } from 'groq-sdk';
+import Together from 'together-ai';
+
+class MemGPTCognitron {
+  constructor(options = {}) {
+    this.config = {
+      dataDir: './cognitron-memgpt-data',
+      recallRetentionLines: 5000
+    };
+    
+    // Hybrid provider setup - simple and direct
+    this.currentProvider = (options.provider || process.env.COGNITRON_PROVIDER || 'groq').toLowerCase(); // Default to groq
+    this.groq = null;
+    this.together = null;
+    // Fixed model: we use only gpt-oss-120b
+    this.model = 'openai/gpt-oss-120b';
+    this.temperature = Number(options.temperature || process.env.COGNITRON_TEMP) || 0.7;
+    this.maxTokens = Number(options.maxTokens || process.env.COGNITRON_MAX_TOKENS) || 2000;
+    this.lastSavedMessageId = 0;
+    // Persona support
+    this.personaPath = options.persona || process.env.COGNITRON_PERSONA || null;
+    this.personaText = '';
+    this.personaName = null;
+    
+    this.memory = {
+      // Core MemGPT memory components
+      workingContext: new Map(),              // Editable core memory
+      conversationContext: [],                // Dynamic FIFO queue with eviction
+      recursiveSummary: '',                   // Compressed history summary
+      archivalStorage: new Map(),             // Long-term structured storage
+      
+      // Session management  
+      sessionId: null,
+      messageIdCounter: 0,
+      
+      // MemGPT parameters
+      maxContextWindow: 8192,
+      memoryPressureThreshold: 0.7,
+      evictionThreshold: 1.0,
+      evictionPercentage: 0.5,
+      
+      // Token tracking
+      systemMessageTokens: 0,
+      workingContextTokens: 0,
+      conversationTokens: 0
+    };
+    
+    this.tools = this.createMemGPTTools();
+    this.isRunning = false;
+  }
+
+  async initializeProviders() {
+    console.log(chalk.blue('🔄 Initializing providers...'));
+    
+    // Initialize Groq
+    const groqKey = process.env.GROQ_API_KEY;
+    if (groqKey?.trim()) {
+      this.groq = new Groq({ apiKey: groqKey.trim() });
+      console.log(chalk.green('✅ Groq provider available'));
+    } else {
+      console.log(chalk.yellow('⚠️ Groq provider unavailable (no GROQ_API_KEY)'));
+    }
+    
+    // Initialize Together AI
+    const togetherKey = process.env.TOGETHER_API_KEY;
+    if (togetherKey?.trim()) {
+      this.together = new Together({ 
+        apiKey: togetherKey.trim(),
+        timeout: 60000 
+      });
+      console.log(chalk.green('✅ Together AI provider available'));
+    } else {
+      console.log(chalk.yellow('⚠️ Together AI provider unavailable (no TOGETHER_API_KEY)'));
+    }
+    
+    // Check if current provider is available
+    if (this.currentProvider === 'groq' && !this.groq) {
+      if (this.together) {
+        this.currentProvider = 'together';
+        console.log(chalk.cyan('🔄 Switched to Together AI (Groq unavailable)'));
+      } else {
+        throw new Error('No providers available! Set GROQ_API_KEY or TOGETHER_API_KEY');
+      }
+    }
+    
+    if (this.currentProvider === 'together' && !this.together) {
+      if (this.groq) {
+        this.currentProvider = 'groq';
+        console.log(chalk.cyan('🔄 Switched to Groq (Together AI unavailable)'));
+      } else {
+        throw new Error('No providers available! Set GROQ_API_KEY or TOGETHER_API_KEY');
+      }
+    }
+    
+    // Model is fixed to gpt-oss-120b
+    console.log(chalk.gray(`📦 Using model: ${this.model}`));
+    
+    console.log(chalk.green(`✅ Using provider: ${this.currentProvider}`));
+    return true;
+  }
+
+  async loadPersona() {
+    if (!this.personaPath) return;
+    try {
+      const fullPath = path.resolve(this.personaPath);
+      const content = await fs.readFile(fullPath, 'utf8');
+      this.personaText = content.trim();
+      this.personaName = path.basename(fullPath);
+      console.log(chalk.magenta(`🎭 Loaded persona: ${this.personaName}`));
+    } catch (e) {
+      console.log(chalk.yellow(`⚠️ Failed to load persona file: ${this.personaPath} (${e.message})`));
+    }
+  }
+
+  async switchProvider(providerName) {
+    const provider = providerName.toLowerCase();
+    
+    if (provider === 'groq') {
+      if (!this.groq) {
+        throw new Error('Groq provider not available. Set GROQ_API_KEY environment variable.');
+      }
+      this.currentProvider = 'groq';
+      console.log(chalk.green('✅ Switched to Groq'));
+      console.log(chalk.gray('💰 Pricing: $0.15/M input, $0.75/M output (Free: 30 RPM, 8K TPM)'));
+    } else if (provider === 'together') {
+      if (!this.together) {
+        throw new Error('Together AI provider not available. Set TOGETHER_API_KEY environment variable.');
+      }
+      this.currentProvider = 'together';
+      console.log(chalk.green('✅ Switched to Together AI'));
+      console.log(chalk.gray('💰 Pricing: $0.16/M input, $0.60/M output'));
+    } else {
+      throw new Error(`Unknown provider: ${provider}. Available: groq, together`);
+    }
+  }
+
+  // No per-provider model selection; model is fixed
+
+  async makeAPICall(messages, toolDefinitions) {
+    const client = this.currentProvider === 'groq' ? this.groq : this.together;
+    const providerName = this.currentProvider === 'groq' ? 'Groq' : 'Together AI';
+    
+    if (process.env.DEBUG) {
+      console.log(chalk.gray(`🔍 Debug - Making API call with ${messages.length} messages, ${toolDefinitions.length} tools`));
+      console.log(chalk.gray(`🔍 Debug - Provider: ${providerName}, Model: ${this.model}`));
+    }
+    
+    try {
+      const response = await client.chat.completions.create({
+        messages,
+        model: this.model,
+        temperature: this.temperature,
+        max_tokens: this.maxTokens,
+        tools: toolDefinitions,
+        tool_choice: 'auto'
+      });
+      
+      return response;
+    } catch (error) {
+      // Prefer structured error data when available
+      const status = error?.response?.status;
+      if (this.currentProvider === 'groq') {
+        if (status === 500) {
+          throw new Error('🔧 Groq is experiencing server issues. Try /provider together');
+        } else if (status === 429 || /rate limit/i.test(error.message || '')) {
+          throw new Error('💳 Groq rate limit exceeded. Try /provider together or wait a moment');
+        }
+      } else {
+        if (status === 401) {
+          throw new Error('💳 Together AI API key invalid. Check TOGETHER_API_KEY');
+        } else if (status === 504 || /timeout/i.test(error.message || '')) {
+          throw new Error('🔧 Together AI timeout. Try /provider groq or /compact to reduce context');
+        }
+      }
+      throw error; // Re-throw original error
+    }
+  }
+
+  // Token counting (approximation - 4 chars ≈ 1 token for GPT models)
+  countTokens(text) {
+    if (!text) return 0;
+    const avgCharsPerToken = 4;
+    return Math.ceil(text.length / avgCharsPerToken);
+  }
+
+  // Count tokens in message array
+  countMessageTokens(messages) {
+    return messages.reduce((total, msg) => {
+      return total + this.countTokens(msg.content || '') + 4; // +4 for role/formatting overhead
+    }, 0);
+  }
+
+  // Get current total token usage
+  getCurrentTokenUsage() {
+    const systemTokens = this.countTokens(this.buildMemGPTSystemMessage());
+    const conversationTokens = this.countMessageTokens(this.memory.conversationContext);
+    
+    this.memory.systemMessageTokens = systemTokens;
+    this.memory.conversationTokens = conversationTokens;
+    this.memory.currentTokenCount = systemTokens + conversationTokens;
+    
+    return {
+      total: this.memory.currentTokenCount,
+      system: systemTokens,
+      conversation: conversationTokens,
+      percentage: this.memory.currentTokenCount / this.memory.maxContextWindow,
+      remaining: this.memory.maxContextWindow - this.memory.currentTokenCount
+    };
+  }
+
+  // Memory pressure monitoring (Real MemGPT behavior)
+  checkMemoryPressure() {
+    const usage = this.getCurrentTokenUsage();
+    const percentage = usage.percentage;
+    
+    console.log(chalk.gray(`🧠 Context: ${usage.total}/${this.memory.maxContextWindow} tokens (${Math.round(percentage * 100)}%)`));
+    
+    if (percentage >= this.memory.evictionThreshold) {
+      console.log(chalk.red('🚨 Context window full! Forcing eviction...'));
+      return this.forceEvictionAndSummarize();
+    } else if (percentage >= this.memory.memoryPressureThreshold) {
+      console.log(chalk.yellow('⚠️ Memory pressure warning! Consider using memory tools.'));
+      return this.sendMemoryPressureWarning();
+    }
+    
+    return { action: 'continue' };
+  }
+
+  // Send memory pressure warning (Real MemGPT system message)
+  sendMemoryPressureWarning() {
+    const usage = this.getCurrentTokenUsage();
+    const warningMessage = `⚠️ Memory pressure warning: Context window ${Math.round(usage.percentage * 100)}% full (${usage.total}/${this.memory.maxContextWindow} tokens). Consider using memory tools to preserve important information before automatic eviction occurs.`;
+    
+    this.addConversationMessage('system', warningMessage);
+    return { action: 'memory_pressure_warning', usage };
+  }
+
+  // Force eviction and summarization (Real MemGPT mechanism)
+  async forceEvictionAndSummarize() {
+    const usage = this.getCurrentTokenUsage();
+    console.log(chalk.red(`🔄 Evicting ${Math.round(this.memory.evictionPercentage * 100)}% of conversation context...`));
+    
+    const totalMessages = this.memory.conversationContext.length;
+    const messagesToEvict = Math.floor(totalMessages * this.memory.evictionPercentage);
+    
+    if (messagesToEvict === 0) {
+      console.log(chalk.yellow('⚠️ No messages to evict, clearing oldest message'));
+      if (totalMessages > 0) {
+        this.memory.conversationContext.shift(); // Remove oldest
+      }
+      return { action: 'minimal_eviction', evicted: 1 };
+    }
+    
+    // Extract messages to evict (oldest first)
+    const messagesToSummarize = this.memory.conversationContext.splice(0, messagesToEvict);
+    
+    // Create summarization request
+    await this.summarizeAndUpdateRecursive(messagesToSummarize);
+    
+    console.log(chalk.green(`✅ Evicted ${messagesToEvict} messages and updated summary`));
+    return { action: 'eviction_complete', evicted: messagesToEvict };
+  }
+
+  // Summarize evicted messages and update recursive summary
+  async summarizeAndUpdateRecursive(messagesToSummarize) {
+    if (messagesToSummarize.length === 0) return;
+    
+    const conversationText = messagesToSummarize
+      .map(msg => `${msg.role}: ${msg.content}`)
+      .join('\n');
+    
+    const summarizationPrompt = `Summarize this conversation segment concisely, preserving key facts, decisions, and context that might be referenced later:
+
+${conversationText}
+
+Previous summary: ${this.memory.recursiveSummary || 'None'}
+
+Instructions:
+- Combine the previous summary (if exists) with new messages
+- Preserve important facts, decisions, and context
+- Keep user preferences and key details
+- Be concise but comprehensive
+- Focus on information that might be referenced later
+Summary:`;
+
+    try {
+      const response = await this.makeAPICall([
+        { role: 'user', content: summarizationPrompt }
+      ], []);
+      
+      // Validate summarization response
+      if (!response.choices || response.choices.length === 0 || 
+          !response.choices[0].message || !response.choices[0].message.content) {
+        throw new Error('Invalid summarization response');
+      }
+      
+      const newSummary = response.choices[0].message.content.trim();
+      this.memory.recursiveSummary = newSummary;
+      
+    } catch (error) {
+      console.log(chalk.yellow('⚠️ Summarization failed, using fallback summary'));
+      // Fallback: simple text concatenation
+      const fallbackSummary = `Previous: ${this.memory.recursiveSummary}\nRecent: ${messagesToSummarize.slice(-3).map(m => m.content).join('; ')}`;
+      this.memory.recursiveSummary = fallbackSummary.substring(0, 500); // Limit fallback size
+    }
+  }
+
+  // Add message to conversation context
+  addConversationMessage(role, content) {
+    this.memory.messageIdCounter++;
+    this.memory.conversationContext.push({
+      id: this.memory.messageIdCounter,
+      role,
+      content,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Shorthand for adding messages
+  addMessage(role, content) {
+    this.addConversationMessage(role, content);
+  }
+
+  createMemGPTTools() {
+    return {
+      core_memory_append: {
+        type: 'function',
+        function: {
+          name: 'core_memory_append',
+          description: 'Append to core memory. Use this to remember key facts about the user, preferences, or important information that should persist across conversations.',
+          parameters: {
+            type: 'object',
+            properties: {
+              key: { 
+                type: 'string', 
+                description: 'A concise key for this memory (e.g., "user_name", "favorite_food")' 
+              },
+              value: { 
+                type: 'string', 
+                description: 'The information to store' 
+              }
+            },
+            required: ['key', 'value']
+          }
+        }
+      },
+      
+      core_memory_replace: {
+        type: 'function',
+        function: {
+          name: 'core_memory_replace',
+          description: 'Replace existing core memory. Use when information has changed.',
+          parameters: {
+            type: 'object',
+            properties: {
+              key: { type: 'string', description: 'The key to update' },
+              new_value: { type: 'string', description: 'The new value' }
+            },
+            required: ['key', 'new_value']
+          }
+        }
+      },
+
+      conversation_search: {
+        type: 'function',
+        function: {
+          name: 'conversation_search',
+          description: 'Search conversation history to recall previous discussions.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: { 
+                type: 'string', 
+                description: 'Keywords to search for in past conversations' 
+              },
+              max_results: { 
+                type: 'number', 
+                description: 'Max results to return', 
+                default: 5 
+              }
+            },
+            required: ['query']
+          }
+        }
+      },
+
+      archival_memory_insert: {
+        type: 'function',
+        function: {
+          name: 'archival_memory_insert',
+          description: 'Store complex information in long-term archival storage.',
+          parameters: {
+            type: 'object',
+            properties: {
+              key: { type: 'string', description: 'Storage key' },
+              content: { type: 'string', description: 'Content to store' }
+            },
+            required: ['key', 'content']
+          }
+        }
+      },
+
+      archival_memory_search: {
+        type: 'function',
+        function: {
+          name: 'archival_memory_search',
+          description: 'Search archival storage for stored information.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query' }
+            },
+            required: ['query']
+          }
+        }
+      },
+
+      get_memory_status: {
+        type: 'function',
+        function: {
+          name: 'get_memory_status',
+          description: 'Get current memory usage and statistics.',
+          parameters: { type: 'object', properties: {} }
+        }
+      },
+
+      pause_heartbeats: {
+        type: 'function',
+        function: {
+          name: 'pause_heartbeats',
+          description: 'Pause to allow user interaction. Use when you need user response.',
+          parameters: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', description: 'Message to show user' }
+            },
+            required: ['message']
+          }
+        }
+      }
+    };
+  }
+
+  async executeMemGPTTool(toolName, args) {
+    switch (toolName) {
+      case 'core_memory_append':
+        this.memory.workingContext.set(args.key, {
+          value: args.value,
+          timestamp: new Date().toISOString()
+        });
+        await this.saveMemory();
+        return {
+          success: true,
+          message: `Stored in core memory: ${args.key} = ${args.value}`
+        };
+
+      case 'core_memory_replace':
+        if (this.memory.workingContext.has(args.key)) {
+          this.memory.workingContext.set(args.key, {
+            value: args.new_value,
+            timestamp: new Date().toISOString()
+          });
+          await this.saveMemory();
+          return {
+            success: true,
+            message: `Updated core memory: ${args.key} = ${args.new_value}`
+          };
+        } else {
+          return {
+            success: false,
+            message: `Key not found in core memory: ${args.key}`
+          };
+        }
+
+      case 'conversation_search':
+        const searchResults = await this.searchConversations(args.query, args.max_results || 5);
+        return {
+          success: true,
+          message: `Found ${searchResults.length} results for "${args.query}"`,
+          data: searchResults
+        };
+
+      case 'archival_memory_insert':
+        this.memory.archivalStorage.set(args.key, {
+          content: args.content,
+          timestamp: new Date().toISOString(),
+          id: `archive_${Date.now()}`
+        });
+        await this.saveMemory();
+        return {
+          success: true,
+          message: `Stored in archival memory: ${args.key}`
+        };
+
+      case 'archival_memory_search':
+        const archivalResults = this.searchArchival(args.query);
+        return {
+          success: true,
+          message: `Found ${archivalResults.length} archival results for "${args.query}"`,
+          data: archivalResults
+        };
+
+      case 'get_memory_status':
+        const usage = this.getCurrentTokenUsage();
+        return {
+          success: true,
+          message: `Memory: ${usage.total}/${this.memory.maxContextWindow} tokens (${Math.round(usage.percentage * 100)}%), Core facts: ${this.memory.workingContext.size}, Archival: ${this.memory.archivalStorage.size}`,
+          data: {
+            tokenUsage: usage,
+            coreMemoryItems: this.memory.workingContext.size,
+            conversationMessages: this.memory.conversationContext.length,
+            archivalItems: this.memory.archivalStorage.size
+          }
+        };
+
+      case 'pause_heartbeats':
+        return {
+          success: true,
+          message: args.message || 'Pausing for user interaction',
+          pause: true
+        };
+
+      default:
+        return {
+          success: false,
+          message: `Unknown tool: ${toolName}`
+        };
+    }
+  }
+
+  async searchConversations(query, maxResults = 5) {
+    const queryLower = query.toLowerCase();
+    
+    try {
+      // Search in JSONL recall storage for better coverage
+      const recallFile = path.join(this.config.dataDir, 'recall-storage.jsonl');
+      
+      try {
+        await fs.access(recallFile);
+        const content = await fs.readFile(recallFile, 'utf8');
+        const lines = content.split('\n').filter(line => line.trim());
+        
+        const matches = lines
+          .map(line => {
+            try {
+              return JSON.parse(line);
+            } catch {
+              return null;
+            }
+          })
+          .filter(msg => msg && msg.content && msg.content.toLowerCase().includes(queryLower))
+          .slice(-maxResults)
+          .map(msg => ({
+            content: (msg.content || '').substring(0, 150) + ((msg.content || '').length > 150 ? '...' : ''),
+            timestamp: msg.timestamp || 'unknown',
+            role: msg.role || 'unknown'
+          }));
+        
+        return matches;
+      } catch {
+        // Fallback to current conversation context
+        return this.memory.conversationContext
+          .filter(msg => msg.content && msg.content.toLowerCase().includes(queryLower))
+          .slice(-maxResults)
+          .map(msg => ({
+            content: msg.content.substring(0, 150) + (msg.content.length > 150 ? '...' : ''),
+            timestamp: msg.timestamp,
+            role: msg.role
+          }));
+      }
+    } catch (error) {
+      return [];
+    }
+  }
+
+  searchArchival(query) {
+    const queryLower = query.toLowerCase();
+    const results = [];
+    
+    for (const [key, item] of this.memory.archivalStorage) {
+      if (key.toLowerCase().includes(queryLower) || 
+          item.content.toLowerCase().includes(queryLower)) {
+        results.push({
+          key,
+          content: item.content.substring(0, 200) + (item.content.length > 200 ? '...' : ''),
+          timestamp: item.timestamp
+        });
+      }
+    }
+    
+    return results.slice(0, 10); // Limit results
+  }
+
+  // Build MemGPT system message with current memory state
+  buildMemGPTSystemMessage() {
+    let coreMemoryString = '';
+    let personaSection = '';
+    if (this.personaText) {
+      personaSection = `Persona Instructions (follow these as high priority):\n${this.personaText}\n\n`;
+    }
+    if (this.memory.workingContext.size > 0) {
+      coreMemoryString = '\n\nCore Memory (Facts about the user and key information):\n';
+      for (const [key, item] of this.memory.workingContext) {
+        coreMemoryString += `- ${key}: ${item.value}\n`;
+      }
+    } else {
+      coreMemoryString = '\n\nCore Memory (Facts about the user and key information):\n- User has not shared personal details yet\n';
+    }
+
+    return `You are an AI assistant with persistent memory capabilities using the MemGPT framework.
+
+${personaSection}
+
+${coreMemoryString}
+## Available MemGPT Tools:
+- core_memory_append: Store key facts about the user in persistent memory
+- core_memory_replace: Update existing core memory when information changes  
+- conversation_search: Search past conversation history
+- archival_memory_insert: Store complex information long-term
+- archival_memory_search: Retrieve stored archival information
+- get_memory_status: Check current memory usage and statistics
+- pause_heartbeats: Signal you're ready for user response (REQUIRED to end interaction)
+
+## CRITICAL: MemGPT Control Flow Instructions:
+1. **ALWAYS use tools autonomously** - don't ask permission
+2. **Function chaining**: You can chain multiple function calls in sequence
+3. **Heartbeat mechanism**: 
+   - Continue processing with more function calls as needed
+   - When ready to respond to user, call pause_heartbeats with your response message
+   - This signals the end of your processing cycle
+4. **You MUST end every interaction by calling pause_heartbeats** with a user-facing message
+5. **Think step by step**: Use functions to gather info, then respond to user
+6. **Be proactive about memory**: Store important facts immediately
+7. **Search when referenced**: If user mentions "earlier" or "before", search conversations
+
+## Example Flow:
+User: "My name is Alice, I love pizza"
+→ core_memory_append(key="user_name", value="Alice")  
+→ core_memory_append(key="food_preference", value="loves pizza")
+→ pause_heartbeats(message="Nice to meet you Alice! I've noted that you love pizza. How can I help you today?")
+
+Remember: EVERY interaction must end with pause_heartbeats containing your response to the user!`;
+  }
+
+  buildMessages() {
+    const systemMessage = {
+      role: 'system',
+      content: this.buildMemGPTSystemMessage()
+    };
+
+    // Build context with recursive summary + conversation context
+    const messages = [systemMessage];
+    
+    // Add recursive summary as context if it exists
+    if (this.memory.recursiveSummary.trim()) {
+      messages.push({
+        role: 'system', 
+        content: `Previous conversation summary: ${this.memory.recursiveSummary}`
+      });
+    }
+
+    // Add current conversation context (clean format for API)
+    // Remove id, timestamp fields that some providers don't accept
+    const cleanMessages = this.memory.conversationContext.map(msg => {
+      const base = { role: msg.role, content: msg.content };
+      if (msg.role === 'tool' && msg.tool_call_id) {
+        base.tool_call_id = msg.tool_call_id;
+      }
+      return base;
+    });
+    
+    messages.push(...cleanMessages);
+    
+    // Debug token counting
+    if (process.env.DEBUG) {
+      const totalTokens = messages.reduce((sum, msg) => sum + this.countTokens(msg.content), 0);
+      const conversationMessages = this.memory.conversationContext.length;
+      console.log(chalk.gray(`🔍 Debug - Built ${messages.length} messages total (${conversationMessages} conversation messages, ~${totalTokens} tokens)`));
+    }
+    
+    return messages;
+  }
+
+  async generateResponse(userInput) {
+    // Add user input to conversation
+    this.addMessage('user', userInput);
+    
+    // Check memory pressure before processing
+    const pressureResult = this.checkMemoryPressure();
+    if (pressureResult.action === 'eviction_complete') {
+      console.log(chalk.green(`✅ Compacted ${pressureResult.evicted} messages`));
+    }
+    
+    try {
+      // MemGPT Heartbeat Loop - AI continues until it calls pause_heartbeats
+      let allToolResults = [];
+      let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      let userFacingMessage = null;
+      let maxHeartbeats = 5; // Prevent infinite loops
+      let heartbeatCount = 0;
+
+      while (!userFacingMessage && heartbeatCount < maxHeartbeats) {
+        heartbeatCount++;
+        const messages = this.buildMessages();
+        const toolDefinitions = Object.values(this.tools);
+
+        const response = await this.makeAPICall(messages, toolDefinitions);
+
+        // Debug response structure
+        if (process.env.DEBUG) {
+          console.log(chalk.gray('🔍 Debug - API Response structure:'), {
+            hasChoices: !!response.choices,
+            choicesLength: response.choices?.length,
+            hasFirstChoice: !!response.choices?.[0],
+            hasMessage: !!response.choices?.[0]?.message,
+            hasContent: !!response.choices?.[0]?.message?.content,
+            hasToolCalls: !!response.choices?.[0]?.message?.tool_calls,
+            toolCallsLength: response.choices?.[0]?.message?.tool_calls?.length || 0
+          });
+        }
+
+        // Track usage
+        if (response.usage) {
+          totalUsage.prompt_tokens += response.usage.prompt_tokens || 0;
+          totalUsage.completion_tokens += response.usage.completion_tokens || 0;
+          totalUsage.total_tokens += response.usage.total_tokens || 0;
+
+          if (process.env.DEBUG && response.usage.total_tokens > 1000) {
+            console.log(chalk.gray(`🔍 Debug - High token usage: ${response.usage.total_tokens} tokens`));
+          }
+        }
+
+        // Validate response structure
+        if (!response.choices || response.choices.length === 0 || !response.choices[0]) {
+          console.error('Invalid API response: no choices');
+          throw new Error('Invalid API response structure');
+        }
+
+        const choice = response.choices[0];
+        if (!choice.message) {
+          console.error('Invalid API response: no message in choice');
+          throw new Error('Invalid API response structure');
+        }
+
+        let assistantContent = choice.message.content || '';
+        const toolCalls = choice.message.tool_calls || [];
+
+        // Add assistant message to conversation
+        if (assistantContent || toolCalls.length > 0) {
+          this.addMessage('assistant', assistantContent || 'Processing with tools...');
+        }
+
+        if (process.env.DEBUG) {
+          console.log(chalk.gray(`🔍 Debug - Processing response:`));
+          console.log(chalk.gray(`  Assistant content: "${assistantContent}"`));
+          console.log(chalk.gray(`  Tool calls: ${toolCalls.length}`));
+          if (toolCalls.length > 0) {
+            toolCalls.forEach((call, i) => {
+              console.log(chalk.gray(`    ${i+1}. ${call.function.name}(${call.function.arguments})`));
+            });
+          }
+        }
+
+        if (toolCalls.length === 0) {
+          // No tool calls - treat this as the final response
+          userFacingMessage = assistantContent || 'I understand.';
+          if (process.env.DEBUG) {
+            console.log(chalk.gray(`🔍 Debug - No tool calls, using assistant content as final response`));
+          }
+          break;
+        }
+
+        // Process tool calls for this heartbeat
+        const heartbeatToolResults = [];
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.function.name;
+          let args;
+          try {
+            args = JSON.parse(toolCall.function.arguments || '{}');
+          } catch (e) {
+            const parseError = { success: false, message: `Invalid tool arguments JSON: ${e.message}` };
+            heartbeatToolResults.push({ toolName, args: null, result: parseError, callId: toolCall.id });
+            if (process.env.DEBUG) {
+              console.log(chalk.gray(`🔍 Debug - Failed to parse args for ${toolName}: ${e.message}`));
+            }
+            continue;
+          }
+          const result = await this.executeMemGPTTool(toolName, args);
+          
+          heartbeatToolResults.push({ toolName, args, result, callId: toolCall.id });
+          
+          // Check for pause_heartbeats - this signals user-facing response
+          if (process.env.DEBUG) {
+            console.log(chalk.gray(`🔍 Debug - Executed ${toolName}: success=${result.success}, message="${result.message}"`));
+          }
+          
+          if (toolName === 'pause_heartbeats' && result.success) {
+            userFacingMessage = result.message;
+            if (process.env.DEBUG) {
+              console.log(chalk.gray(`🔍 Debug - Found pause_heartbeats! Setting user message: "${userFacingMessage}"`));
+            }
+            break;
+          }
+        }
+
+        allToolResults.push(...heartbeatToolResults);
+        
+        // Feed tool results back as tool-role messages if possible
+        if (heartbeatToolResults.length > 0 && !userFacingMessage) {
+          const anyCallIds = heartbeatToolResults.some(tr => !!tr.callId);
+          if (anyCallIds) {
+            for (const tr of heartbeatToolResults) {
+              const content = JSON.stringify(tr.result);
+              // Add tool message carrying the result for the corresponding tool call
+              this.memory.messageIdCounter++;
+              this.memory.conversationContext.push({
+                id: this.memory.messageIdCounter,
+                role: 'tool',
+                content,
+                tool_call_id: tr.callId,
+                timestamp: new Date().toISOString()
+              });
+            }
+          } else {
+            // Fallback: system summary if no tool_call_id provided by provider
+            const toolSummary = heartbeatToolResults
+              .map(tr => `${tr.toolName}(${JSON.stringify(tr.args)}) -> ${tr.result.message}`)
+              .join('\n');
+            this.addMessage('system', `Tool results:\n${toolSummary}`);
+          }
+        }
+      }
+
+      // If we hit max heartbeats without pause_heartbeats, provide default response
+      if (!userFacingMessage) {
+        userFacingMessage = "I've processed your request and updated my memory.";
+      }
+
+      return {
+        content: userFacingMessage,
+        toolCalls: allToolResults,
+        usage: totalUsage,
+        heartbeats: heartbeatCount
+      };
+
+    } catch (error) {
+      console.error(chalk.red('API Error:'), error.message);
+      
+      // Log more details for debugging
+      if (error.response) {
+        console.error(chalk.red('Response status:'), error.response.status);
+        console.error(chalk.red('Response data:'), JSON.stringify(error.response.data));
+      }
+      
+      // Different error messages based on error type
+      let errorMessage = "I'm having trouble connecting to my language service. Please try again.";
+      
+      if (error.message.includes('🔧') || error.message.includes('💳')) {
+        errorMessage = error.message; // Use provider-specific error message
+      } else if (error.message.includes('Invalid API response')) {
+        errorMessage = "Received an unexpected response format. Please try again.";
+      } else if (error.message.includes('rate limit')) {
+        errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
+      }
+      
+      return {
+        content: errorMessage,
+        toolCalls: [],
+        usage: null,
+        error: error.message
+      };
+    }
+  }
+
+  async handleCommand(input) {
+    const command = input.toLowerCase();
+    
+    switch (command) {
+      case '/exit':
+      case '/quit':
+        console.log(chalk.gray('\n💾 Saving memory...'));
+        await this.saveMemory();
+        console.log(chalk.green('✅ Memory saved!'));
+        console.log(chalk.gray('👋 Goodbye!'));
+        return 'exit';
+        
+      case '/help':
+        console.log(chalk.cyan('\n📚 MemGPT Commands:'));
+        console.log('  /help     - Show this help');
+        console.log('  /memory   - Show current memory state');
+        console.log('  /compact  - Force memory compaction to reduce API payload');
+        console.log('  /provider - Switch LLM provider (groq|together)');
+        console.log('  /status   - Show current provider and pricing');
+        console.log('  /clear    - Clear conversation');
+        console.log('  /reset    - Reset all memory (clears persisted files)');
+        console.log('  /exit     - Save and exit');
+        console.log(chalk.yellow('\n🧠 MemGPT Features:'));
+        console.log('  • AI autonomously manages memory with tools');
+        console.log('  • Remembers facts across sessions');
+        console.log('  • Searches past conversations');
+        console.log('  • Stores complex information');
+        console.log(chalk.blue('\n🔄 Provider Management:'));
+        console.log('  • /provider groq    - Switch to Groq (free)');
+        console.log('  • /provider together - Switch to Together AI (paid)');
+        return 'continue';
+        
+      case '/memory':
+        console.log(chalk.cyan('\n🧠 MemGPT Memory Status:'));
+        const usage = this.getCurrentTokenUsage();
+        console.log(chalk.gray(`Session: ${this.memory.sessionId}`));
+        console.log(chalk.gray(`Context: ${usage.total}/${this.memory.maxContextWindow} tokens (${Math.round(usage.percentage * 100)}%)`));
+        console.log(chalk.gray(`Conversation messages: ${this.memory.conversationContext.length}`));
+        console.log(chalk.gray(`Message ID counter: ${this.memory.messageIdCounter}`));
+        console.log(chalk.gray(`Archival entries: ${this.memory.archivalStorage.size}`));
+        
+        if (this.memory.recursiveSummary) {
+          console.log(chalk.yellow(`📝 Recursive summary: ${this.memory.recursiveSummary.substring(0, 100)}...`));
+        }
+        
+        if (this.memory.workingContext.size > 0) {
+          console.log(chalk.green('\n💡 Core Memory (Key Facts):'));
+          for (const [key, item] of this.memory.workingContext) {
+            console.log(chalk.gray(`  ${key}: ${item.value}`));
+          }
+        }
+        return 'continue';
+
+      case '/status':
+        console.log(chalk.cyan('\n🔧 Provider Status:'));
+        console.log(chalk.green(`Current: ${this.currentProvider}`));
+        console.log(chalk.gray(`Model: ${this.model}`));
+        
+        // Show available providers
+        console.log(chalk.blue('\nAvailable providers:'));
+        if (this.groq) {
+          const indicator = this.currentProvider === 'groq' ? chalk.green('✅') : chalk.gray('  ');
+          console.log(`${indicator} groq - $0.15/M input, $0.75/M output (Free: 30 RPM, 8K TPM)`);
+        } else {
+          console.log(chalk.red('❌ groq - Not available (missing GROQ_API_KEY)'));
+        }
+        
+        if (this.together) {
+          const indicator = this.currentProvider === 'together' ? chalk.green('✅') : chalk.gray('  ');
+          console.log(`${indicator} together - $0.16/M input, $0.60/M output (20% cheaper output)`);
+        } else {
+          console.log(chalk.red('❌ together - Not available (missing TOGETHER_API_KEY)'));
+        }
+        return 'continue';
+        
+      case '/compact':
+        console.log(chalk.blue('🔄 Manual memory compaction...'));
+        if (this.memory.conversationContext.length > 20) {
+          const result = await this.forceEvictionAndSummarize();
+          console.log(chalk.green(`✅ Compacted ${result.evicted} messages down to ${this.memory.conversationContext.length}`));
+          console.log(chalk.green('✅ Saved compacted memory state'));
+          console.log(chalk.cyan('💡 Older messages summarized and moved to recursive summary.'));
+        } else {
+          console.log(chalk.gray('Memory is already manageable (< 20 messages)'));
+        }
+        return 'continue';
+        
+      case '/clear':
+        this.memory.conversationContext = [];
+        this.memory.recursiveSummary = '';
+        console.log(chalk.green('✅ Cleared conversation history'));
+        await this.saveMemory();
+        return 'continue';
+        
+      case '/reset':
+        console.log(chalk.yellow('⚠️ Resetting ALL memory (core, conversations, archival, session)...'));
+        try {
+          const files = [
+            'working-context.json',
+            'recall-storage.jsonl',
+            'archival-storage.json',
+            'session-state.json'
+          ];
+          for (const f of files) {
+            try { await fs.unlink(path.join(this.config.dataDir, f)); } catch {}
+          }
+          // Reset in-memory state
+          this.memory.workingContext = new Map();
+          this.memory.conversationContext = [];
+          this.memory.archivalStorage = new Map();
+          this.memory.recursiveSummary = '';
+          this.memory.messageIdCounter = 0;
+          this.lastSavedMessageId = 0;
+          console.log(chalk.green('✅ All memory reset.'));
+        } catch (e) {
+          console.log(chalk.red(`❌ Failed to reset: ${e.message}`));
+        }
+        return 'continue';
+
+      default:
+        // Check if it's a provider command with arguments
+        if (input.startsWith('/provider ')) {
+          const providerName = input.split(' ')[1]?.trim();
+          if (providerName) {
+            try {
+              await this.switchProvider(providerName);
+              return 'continue';
+            } catch (error) {
+              console.log(chalk.red(`❌ ${error.message}`));
+              return 'continue';
+            }
+          } else {
+            console.log(chalk.red('❌ Please specify a provider: /provider <groq|together>'));
+            console.log(chalk.gray('Available: groq, together'));
+            return 'continue';
+          }
+        }
+        
+        // No /model command; model is fixed
+        
+        return await this.generateResponse(input);
+    }
+  }
+
+  async loadMemory() {
+    try {
+      await fs.mkdir(this.config.dataDir, { recursive: true });
+      
+      // Generate session ID if not exists
+      if (!this.memory.sessionId) {
+        this.memory.sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      }
+      
+      // Load working context (core memory)
+      const workingContextFile = path.join(this.config.dataDir, 'working-context.json');
+      try {
+        const workingData = await fs.readFile(workingContextFile, 'utf8');
+        const parsed = JSON.parse(workingData);
+        this.memory.workingContext = new Map(parsed.entries || []);
+      } catch {
+        // File doesn't exist yet
+      }
+      
+      // Load recall storage (conversation context)
+      const recallFile = path.join(this.config.dataDir, 'recall-storage.jsonl');
+      try {
+        const recallData = await fs.readFile(recallFile, 'utf8');
+        const lines = recallData.split('\n').filter(line => line.trim());
+        
+        // Load recent messages (last 50) for conversation context
+        const recentMessages = lines.slice(-50).map(line => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return null;
+          }
+        }).filter(msg => msg);
+        
+        this.memory.conversationContext = recentMessages;
+        this.memory.messageIdCounter = Math.max(...recentMessages.map(m => m.id || 0), 0);
+        
+        console.log(chalk.blue(`📚 Loaded ${recentMessages.length} messages (${this.countMessageTokens(recentMessages)} tokens)`));
+      } catch {
+        // No recall storage yet
+        console.log(chalk.cyan('🆕 Starting fresh MemGPT session'));
+      }
+      
+      // Load archival storage
+      const archivalFile = path.join(this.config.dataDir, 'archival-storage.json');
+      try {
+        const archivalData = await fs.readFile(archivalFile, 'utf8');
+        const parsed = JSON.parse(archivalData);
+        this.memory.archivalStorage = new Map(parsed.entries || []);
+      } catch {
+        // File doesn't exist yet
+      }
+      
+      // Load session state
+      const sessionFile = path.join(this.config.dataDir, 'session-state.json');
+      try {
+        const sessionData = await fs.readFile(sessionFile, 'utf8');
+        const session = JSON.parse(sessionData);
+        this.memory.recursiveSummary = session.recursiveSummary || '';
+      } catch {
+        // No session state yet
+      }
+      
+      // Initialize lastSavedMessageId to current counter so we only append new messages
+      this.lastSavedMessageId = this.memory.messageIdCounter;
+     
+    } catch (error) {
+      console.error(chalk.red('Failed to load memory:'), error.message);
+    }
+  }
+
+  async saveMemory() {
+    try {
+      await fs.mkdir(this.config.dataDir, { recursive: true });
+      
+      // Save working context
+      const workingContextFile = path.join(this.config.dataDir, 'working-context.json');
+      await fs.writeFile(workingContextFile, JSON.stringify({
+        entries: Array.from(this.memory.workingContext.entries()),
+        lastUpdated: new Date().toISOString()
+      }, null, 2));
+      
+      // Append to recall storage (JSONL format)
+      const recallFile = path.join(this.config.dataDir, 'recall-storage.jsonl');
+      const newMessages = this.memory.conversationContext.filter(msg => msg.id > (this.lastSavedMessageId ?? 0));
+      if (newMessages.length > 0) {
+        const jsonlContent = newMessages.map(msg => JSON.stringify(msg)).join('\n') + '\n';
+        await fs.appendFile(recallFile, jsonlContent);
+        this.lastSavedMessageId = Math.max(...newMessages.map(m => m.id || 0));
+        // Enforce simple retention cap to avoid unbounded growth
+        try {
+          const content = await fs.readFile(recallFile, 'utf8');
+          const lines = content.split('\n').filter(Boolean);
+          const limit = this.config.recallRetentionLines || 5000;
+          if (lines.length > limit) {
+            const trimmed = lines.slice(-limit).join('\n') + '\n';
+            await fs.writeFile(recallFile, trimmed, 'utf8');
+          }
+        } catch {}
+      }
+      
+      // Save archival storage
+      const archivalFile = path.join(this.config.dataDir, 'archival-storage.json');
+      await fs.writeFile(archivalFile, JSON.stringify({
+        entries: Array.from(this.memory.archivalStorage.entries()),
+        lastUpdated: new Date().toISOString()
+      }, null, 2));
+      
+      // Save session state
+      const sessionFile = path.join(this.config.dataDir, 'session-state.json');
+      await fs.writeFile(sessionFile, JSON.stringify({
+        sessionId: this.memory.sessionId,
+        messageIdCounter: this.memory.messageIdCounter,
+        recursiveSummary: this.memory.recursiveSummary,
+        lastUpdated: new Date().toISOString()
+      }, null, 2));
+      
+    } catch (error) {
+      console.error(chalk.red('Failed to save memory:'), error.message);
+    }
+  }
+
+  async startChat() {
+    console.log(chalk.bold.cyan('🧠 Cognitron05 MemGPT - Infinite Conversation Memory'));
+    console.log(chalk.gray('════════════════════════════════════════════════════'));
+    
+    // Initialize providers
+    await this.initializeProviders();
+    // Load persona if provided
+    await this.loadPersona();
+    
+    await this.loadMemory();
+    
+    const usage = this.getCurrentTokenUsage();
+    
+    if (this.memory.conversationContext.length > 0) {
+      console.log(chalk.green(`✅ Resumed session with ${this.memory.conversationContext.length} conversation messages`));
+      console.log(chalk.gray(`📊 Context usage: ${usage.total}/${this.memory.maxContextWindow} tokens (${Math.round(usage.percentage * 100)}%)`));
+      console.log(chalk.gray(`📊 Total messages stored: ${this.memory.messageIdCounter}`));
+      console.log(chalk.yellow(`🧠 Core memories: ${this.memory.workingContext.size}`));
+      
+      if (this.memory.recursiveSummary) {
+        console.log(chalk.cyan(`📝 Has conversation summary from previous sessions`));
+      }
+    } else {
+      console.log(chalk.cyan('🆕 Starting new MemGPT session'));
+      console.log(chalk.gray(`📊 Context limit: ${this.memory.maxContextWindow} tokens`));
+      console.log(chalk.gray(`⚠️ Memory pressure warning at ${Math.round(this.memory.memoryPressureThreshold * 100)}%`));
+    }
+    
+    console.log(chalk.gray('\nI can autonomously manage my memory using MemGPT tools.'));
+    console.log(chalk.gray('Tell me about yourself and I\'ll remember for next time!'));
+    const personaInfo = this.personaName ? ` | Persona: ${this.personaName}` : '';
+    console.log(chalk.blue(`\nProvider: ${this.currentProvider} | Model: ${this.model}${personaInfo} | Use /provider to change | /help for commands\n`));
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      prompt: chalk.cyan('> ')
+    });
+
+    this.isRunning = true;
+    rl.prompt();
+
+    rl.on('line', async (input) => {
+      const trimmedInput = input.trim();
+      
+      if (!trimmedInput) {
+        rl.prompt();
+        return;
+      }
+
+      if (trimmedInput.startsWith('/')) {
+        const result = await this.handleCommand(trimmedInput);
+        if (result === 'exit') {
+          rl.close();
+          return;
+        } else if (typeof result === 'string' || result === 'continue') {
+          rl.prompt();
+          return;
+        }
+        // If result is a response object, continue to display it
+      } else {
+        console.log(chalk.gray('🤖 Thinking and managing memory...'));
+        var result = await this.generateResponse(trimmedInput);
+      }
+
+      // Display tool calls (MemGPT memory operations)
+      if (result.toolCalls && result.toolCalls.length > 0) {
+        console.log(chalk.yellow('\n🧠 MemGPT Memory Operations:'));
+        for (const { toolName, result: toolResult } of result.toolCalls) {
+          if (toolResult.success) {
+            console.log(chalk.green(`   ✅ ${toolName}`));
+            console.log(chalk.gray(`      → ${toolResult.message}`));
+          } else {
+            console.log(chalk.red(`   ❌ ${toolName}`));
+            console.log(chalk.gray(`      → ${toolResult.message}`));
+          }
+        }
+      }
+
+      // Display AI response
+      if (result.content) {
+        console.log(chalk.cyan('\n💬 AI Response:'));
+        console.log(result.content);
+      }
+
+      // Display usage info if in debug mode
+      if (process.env.DEBUG && result.usage) {
+        console.log(chalk.gray(`\n📊 Usage: ${result.usage.total_tokens} tokens (${result.heartbeats} heartbeats)`));
+      }
+
+      // Save memory after each interaction
+      await this.saveMemory();
+      
+      rl.prompt();
+    });
+
+    rl.on('close', async () => {
+      if (this.isRunning) {
+        console.log(chalk.gray('\n💾 Saving memory...'));
+        await this.saveMemory();
+        console.log(chalk.green('✅ Memory saved!'));
+        console.log(chalk.gray('👋 Goodbye!'));
+      }
+      process.exit(0);
+    });
+
+    // Handle process termination
+    process.on('SIGINT', async () => {
+      console.log(chalk.gray('\n💾 Saving memory...'));
+      await this.saveMemory();
+      console.log(chalk.green('✅ Memory saved!'));
+      process.exit(0);
+    });
+  }
+}
+
+// CLI Setup
+const program = new Command();
+
+program
+  .name('cognitron05')
+  .description('MemGPT-style AI Assistant with Hybrid Provider Support')
+  .version('1.0.0');
+
+program
+  .option('--provider <provider>', 'LLM provider to use (groq|together)')
+  .option('--temperature <temperature>', 'Sampling temperature')
+  .option('--max-tokens <maxTokens>', 'Max tokens for completion')
+  .option('--persona <file>', 'Path to persona text file')
+  .action(async (cmd) => {
+    const opts = program.opts();
+    const cognitron = new MemGPTCognitron(opts);
+    await cognitron.startChat();
+  });
+
+program.parse();
+
+// Export for testing and modular usage
+export { MemGPTCognitron };

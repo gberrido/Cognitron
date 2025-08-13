@@ -1,0 +1,112 @@
+{
+  "df": {
+    "strawberries": 9,
+    "are": 9,
+    "red": 9,
+    "and": 9,
+    "tasty": 9,
+    "blueberries": 9,
+    "blue": 9
+  },
+  "docs": {
+    "b06b2a59-6d56-471c-b712-30915126674e": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "f85e10db-daaf-4426-b9eb-e0eadaaf92c6": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "8c0f3888-ed85-4d3d-b9f1-0e9c617ecc51": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "492d5fd1-123c-4ff4-9444-2db197fd232c": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "36e8bc53-79d6-4d9b-ba8b-3c286a862303": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "638e9fa8-9345-4235-a43c-142d65cc9fc9": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "ef196cfb-4076-4869-9fc6-2b675f7e37f6": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "433846af-a7ca-4f68-b9c3-12261312ed0a": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    },
+    "32016f75-e7ad-4144-ac28-91d32f561ed0": {
+      "tf": {
+        "strawberries": 1,
+        "are": 2,
+        "red": 1,
+        "and": 1,
+        "tasty": 1,
+        "blueberries": 1,
+        "blue": 1
+      }
+    }
+  }
+}

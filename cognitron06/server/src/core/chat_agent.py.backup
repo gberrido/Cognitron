@@ -1,0 +1,396 @@
+#!/usr/bin/env python3
+"""
+MemGPT Chat Agent for Cognitron06 Server
+Python port with async support and memory integration
+"""
+
+import json
+import logging
+from typing import Dict, List, Any, Optional, AsyncGenerator
+from groq import AsyncGroq
+from .memory_system import MemGPTMemorySystem
+
+logger = logging.getLogger(__name__)
+
+
+class ChatAgent:
+    """MemGPT-enhanced chat agent with memory management"""
+    
+    def __init__(self, api_key: str, model: str = "openai/gpt-oss-120b", memory_system: MemGPTMemorySystem = None):
+        self.config = {
+            "api_key": api_key,
+            "model": model,
+            "temperature": 0.7,
+            "max_tokens": 2048,
+            "reasoning_level": "medium"
+        }
+        
+        self.memory_system = memory_system
+        self.groq = AsyncGroq(api_key=api_key)
+        
+        # Tool definitions for MemGPT memory management
+        self.tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "core_memory_append",
+                    "description": "Append to the working context (core memory). Use this to remember key facts about the user, preferences, or important information that should persist across conversations.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "key": {
+                                "type": "string",
+                                "description": "A concise key/label for this memory (e.g., 'user_name', 'favorite_food', 'birthday')"
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "The information to store in core memory"
+                            }
+                        },
+                        "required": ["key", "value"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "core_memory_replace",
+                    "description": "Replace or update existing working context (core memory). Use when information has changed or needs to be corrected.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "key": {
+                                "type": "string",
+                                "description": "The key to update in core memory"
+                            },
+                            "new_value": {
+                                "type": "string",
+                                "description": "The new value to replace the old one"
+                            }
+                        },
+                        "required": ["key", "new_value"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "conversation_search",
+                    "description": "Search through conversation history to recall previous discussions. Use when the user references something from earlier conversations.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Search query - keywords or phrases to find in past conversations"
+                            },
+                            "max_results": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 20,
+                                "description": "Maximum number of results to return (default: 5)"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "archival_memory_insert",
+                    "description": "Store structured data in archival memory for long-term retrieval. Use for complex information that doesn't fit in core memory.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "key": {
+                                "type": "string",
+                                "description": "A descriptive key for the stored data"
+                            },
+                            "data": {
+                                "type": "string",
+                                "description": "The data to store in archival memory"
+                            }
+                        },
+                        "required": ["key", "data"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "archival_memory_search",
+                    "description": "Search archival storage for specific data. Use to retrieve previously stored structured information.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Search query for archival data"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_memory_status",
+                    "description": "Check current memory usage and pressure. Use to monitor memory system health.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                }
+            }
+        ]
+    
+    def build_system_message(self, user_id: str) -> Dict[str, str]:
+        """Build the system message with current working context"""
+        reasoning_instructions = {
+            "low": "Provide direct, concise responses. Use simple explanations.",
+            "medium": "Think through problems systematically. Provide clear reasoning.",
+            "high": "Use detailed analysis and step-by-step reasoning. Consider multiple perspectives."
+        }
+        
+        working_context = "Working context is empty."
+        if self.memory_system:
+            working_context = self.memory_system.get_working_context_summary(user_id)
+        
+        reasoning_level = self.config["reasoning_level"]
+        
+        return {
+            "role": "system",
+            "content": f"""You are Cognitron, an advanced AI assistant powered by {self.config['model']} via Groq API with MemGPT-inspired long-term memory.
+
+REASONING LEVEL: {reasoning_level.upper()} - {reasoning_instructions[reasoning_level]}
+
+MEMORY ARCHITECTURE:
+You have access to a hierarchical memory system based on MemGPT principles:
+- Working Context: Core facts, user preferences, and key information that persists across sessions
+- Conversation History: Recent messages with automatic queue management 
+- Archival Storage: Long-term structured data with search capabilities
+
+{working_context}
+
+MEMORY MANAGEMENT TOOLS:
+- core_memory_append: Add important facts to working context (user preferences, key info)
+- core_memory_replace: Update existing working context entries
+- conversation_search: Search past conversations for relevant context
+- archival_memory_insert: Store complex information for long-term retrieval
+- archival_memory_search: Search archival storage for specific data
+- get_memory_status: Check current memory usage and pressure
+
+BEHAVIOR GUIDELINES:
+- Use memory management tools proactively to remember important information
+- Check memory pressure and manage context efficiently
+- Search conversation history when users reference past discussions
+- Store complex or important information in archival memory
+- Update working context with user preferences and key facts
+
+When asked about your model or identity, respond that you are Cognitron powered by {self.config['model']} through the Groq API with stateful MemGPT-inspired memory.
+
+The system maintains persistent memory across sessions and will resume conversations exactly where they left off."""
+        }
+    
+    def get_conversation_context(self, user_id: str) -> List[Dict[str, str]]:
+        """Get conversation context using MemGPT memory architecture"""
+        messages = [self.build_system_message(user_id)]
+        
+        if not self.memory_system:
+            return messages
+        
+        # Get FIFO queue context
+        fifo_context = self.memory_system.get_fifo_queue_context(user_id)
+        messages.extend(fifo_context)
+        
+        # Check memory pressure and warn if needed
+        memory_pressure = self.memory_system.check_memory_pressure(user_id)
+        if memory_pressure["warning"]:
+            messages.append({
+                "role": "system",
+                "content": f"[MEMORY PRESSURE WARNING]: {memory_pressure['message']} ({memory_pressure['usage']}% used)"
+            })
+        
+        return messages
+    
+    async def execute_tool(self, user_id: str, tool_call: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a memory management tool"""
+        if not self.memory_system:
+            return {"error": "Memory system not available"}
+        
+        function_name = tool_call["function"]["name"]
+        
+        try:
+            arguments = json.loads(tool_call["function"]["arguments"])
+            if function_name == "core_memory_append":
+                key = arguments["key"]
+                value = arguments["value"]
+                await self.memory_system.update_working_context(user_id, key, value)
+                return {
+                    "success": True,
+                    "message": f"Added to core memory: {key} = {value}",
+                    "details": "Working context updated"
+                }
+            
+            elif function_name == "core_memory_replace":
+                key = arguments["key"]
+                new_value = arguments["new_value"]
+                old_value = self.memory_system.get_working_context(user_id, key)
+                await self.memory_system.update_working_context(user_id, key, new_value)
+                return {
+                    "success": True,
+                    "message": f"Updated core memory: {key} = {new_value}",
+                    "details": f"Previous value: {old_value['value'] if old_value else 'None'}"
+                }
+            
+            elif function_name == "conversation_search":
+                query = arguments["query"]
+                max_results = arguments.get("max_results", 5)
+                results = self.memory_system.search_recall_storage(user_id, query, {"max_results": max_results})
+                return {
+                    "success": True,
+                    "message": f"Found {len(results)} conversation results for: \"{query}\"",
+                    "results": [{
+                        "timestamp": r["timestamp"],
+                        "role": r["role"],
+                        "content": r["content"][:200] + ("..." if len(r["content"]) > 200 else ""),
+                        "relevance": r["relevance_score"]
+                    } for r in results],
+                    "query": query,
+                    "count": len(results)
+                }
+            
+            elif function_name == "archival_memory_insert":
+                key = arguments["key"]
+                data = arguments["data"]
+                await self.memory_system.insert_archival(user_id, key, data)
+                return {
+                    "success": True,
+                    "message": f"Stored in archival memory: {key}",
+                    "details": f"Data: {data[:100]}{'...' if len(data) > 100 else ''}"
+                }
+            
+            elif function_name == "archival_memory_search":
+                query = arguments["query"]
+                results = self.memory_system.search_archival(user_id, query)
+                return {
+                    "success": True,
+                    "message": f"Found {len(results)} archival results for: \"{query}\"",
+                    "results": results,
+                    "query": query,
+                    "count": len(results)
+                }
+            
+            elif function_name == "get_memory_status":
+                status = self.memory_system.get_status(user_id)
+                pressure = self.memory_system.check_memory_pressure(user_id)
+                return {
+                    "success": True,
+                    "message": "Memory status retrieved",
+                    "status": {
+                        "working_context": status.working_context_size,
+                        "conversation_queue": status.fifo_queue_length,
+                        "recall_storage": status.recall_storage_size,
+                        "archival_storage": status.archival_storage_size,
+                        "memory_pressure": f"{pressure['usage']}%",
+                        "estimated_tokens": pressure["estimated_tokens"],
+                        "context_window": pressure["context_window"]
+                    }
+                }
+            
+            else:
+                return {"error": f"Unknown function: {function_name}"}
+        
+        except Exception as e:
+            logger.error(f"Error executing tool {function_name}: {e}")
+            return {"error": f"Tool execution failed: {str(e)}"}
+    
+    async def generate_response(self, user_id: str, user_message: str, stream: bool = False) -> Dict[str, Any]:
+        """Generate response using MemGPT-enhanced context"""
+        try:
+            # Add user message to memory
+            if self.memory_system:
+                await self.memory_system.add_to_fifo_queue(user_id, "user", user_message)
+            
+            # Get conversation context
+            messages = self.get_conversation_context(user_id)
+            
+            # Prepare API call
+            api_options = {
+                "model": self.config["model"],
+                "messages": messages,
+                "temperature": self.config["temperature"],
+                "max_tokens": self.config["max_tokens"],
+                "tools": self.tools,
+                "tool_choice": "auto"
+            }
+            
+            if stream:
+                return await self._generate_streaming_response(user_id, api_options)
+            else:
+                return await self._generate_complete_response(user_id, api_options)
+        
+        except Exception as e:
+            logger.error(f"Error generating response: {e}")
+            return {
+                "error": f"Failed to generate response: {str(e)}",
+                "content": None,
+                "tool_calls": []
+            }
+    
+    async def _generate_complete_response(self, user_id: str, api_options: Dict) -> Dict[str, Any]:
+        """Generate complete response (non-streaming)"""
+        response = await self.groq.chat.completions.create(**api_options)
+        
+        message = response.choices[0].message
+        content = message.content
+        tool_calls = message.tool_calls or []
+        
+        # Process tool calls
+        tool_results = []
+        if tool_calls:
+            for tool_call in tool_calls:
+                result = await self.execute_tool(user_id, tool_call)
+                tool_results.append({
+                    "tool_call_id": tool_call.id,
+                    "function_name": tool_call.function.name,
+                    "result": result
+                })
+        
+        # Add assistant message to memory
+        if self.memory_system and content:
+            await self.memory_system.add_to_fifo_queue(user_id, "assistant", content)
+        
+        return {
+            "content": content,
+            "tool_calls": tool_results,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+        }
+    
+    async def _generate_streaming_response(self, user_id: str, api_options: Dict) -> AsyncGenerator[str, None]:
+        """Generate streaming response"""
+        api_options["stream"] = True
+        
+        async for chunk in await self.groq.chat.completions.create(**api_options):
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+    
+    def update_config(self, config: Dict[str, Any]):
+        """Update agent configuration"""
+        self.config.update(config)
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get agent status"""
+        return {
+            "model": self.config["model"],
+            "temperature": self.config["temperature"],
+            "reasoning_level": self.config["reasoning_level"],
+            "available_tools": len(self.tools)
+        }

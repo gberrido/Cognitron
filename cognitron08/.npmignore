@@ -1,0 +1,8 @@
+# Exclude non-kernel assets from package tarball
+tests/
+.test-tmp/
+cli/
+ref/
+*.log
+*.md.bak
+**/.DS_Store

@@ -1,0 +1,36 @@
+{
+  "sessionId": "session-2025-08-08T0339-9j8125",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hello, I'm testing the simple version",
+      "timestamp": "2025-08-08T03:39:28.631Z",
+      "id": "1754624368631"
+    },
+    {
+      "role": "user",
+      "content": "hello, I'm testing the simple version",
+      "timestamp": "2025-08-08T03:39:48.788Z",
+      "id": "1754624388789"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! 👋 How can I assist you today?",
+      "timestamp": "2025-08-08T03:39:49.117Z",
+      "id": "1754624389117"
+    },
+    {
+      "role": "user",
+      "content": "hello, I'm testing the simple version",
+      "timestamp": "2025-08-08T03:52:08.205Z",
+      "id": "1754625128206"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! How can I help you with your test?",
+      "timestamp": "2025-08-08T03:52:08.600Z",
+      "id": "1754625128600"
+    }
+  ],
+  "lastSaved": "2025-08-08T03:52:12.184Z"
+}
