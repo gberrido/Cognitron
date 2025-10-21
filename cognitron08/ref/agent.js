@@ -8,6 +8,7 @@ import { TogetherProvider } from './providers/together.js';
 import { getToolRegistry, getToolDefinitions, parseTextToolCalls } from './tools.js';
 import { summarizeSegment } from './summarize.js';
 import { runTurn } from '../core/runTurn.js';
+import { countTokens, countMessageTokens } from './utils/tokenizer.js';
 
 export class RefAgent {
   constructor(opts = {}) {
@@ -20,6 +21,7 @@ export class RefAgent {
     this.memoryPressureThreshold = 0.7;
     this.evictionThreshold = 1.0;
     this.evictionPercentage = 0.5;
+    this.maxConversationSize = opts.maxConversationSize ?? 1000; // Prevent memory leak
     this.streamEnabled = false;
     this.showThinking = false;
     this.autosum = false;
@@ -124,8 +126,9 @@ export class RefAgent {
     msgs.push(...clean);
     return msgs;
   }
-  countTokens(text) { if (!text) return 0; return Math.ceil(String(text).length / 4); }
-  countMessageTokens(msgs) { return (msgs || []).reduce((t, m) => t + this.countTokens(m.content || '') + 4, 0); }
+  // Use improved tokenizer from utils/tokenizer.js
+  countTokens(text) { return countTokens(text); }
+  countMessageTokens(msgs) { return countMessageTokens(msgs); }
   getTokenUsage() {
     const systemTokens = this.countTokens(this.buildSystemMessage());
     const summaryTokens = this.countTokens(this.summary || '');
@@ -146,6 +149,31 @@ export class RefAgent {
     const evicted = this.conversation.splice(0, toEvict);
     this.summary = await summarizeSegment(this, evicted);
     await this.saveState();
+  }
+
+  /**
+   * Enforce maximum conversation size to prevent memory leaks
+   * Archives oldest messages if conversation exceeds maxConversationSize
+   */
+  async enforceConversationLimit() {
+    if (this.conversation.length <= this.maxConversationSize) {
+      return; // Within limit
+    }
+
+    // Calculate how many messages to archive
+    const excessCount = this.conversation.length - this.maxConversationSize;
+    const toArchive = this.conversation.splice(0, excessCount);
+
+    // Save archived messages to recall storage
+    await this.recall.appendMessages(toArchive);
+
+    // Update summary to include archived messages
+    const archivedSummary = await summarizeSegment(this, toArchive);
+    this.summary = this.summary
+      ? `${this.summary}\n\n${archivedSummary}`
+      : archivedSummary;
+
+    console.warn(chalk.yellow(`⚠️  Archived ${excessCount} old messages (conversation size limit: ${this.maxConversationSize})`));
   }
   async sendPressureWarning() {
     const u = this.getTokenUsage();
@@ -201,6 +229,10 @@ export class RefAgent {
     }
 
     if (!finalMsg) finalMsg = `I've processed your request and updated my memory.`;
+
+    // Enforce conversation size limit to prevent memory leaks
+    await this.enforceConversationLimit();
+
     return { message: finalMsg, canStream, tools: (ops||[]) };
   }
   async streamFinalResponse() {
