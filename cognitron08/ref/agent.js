@@ -5,6 +5,7 @@ import { SessionStore } from './memory/session.js';
 import { MockProvider } from './providers/mock.js';
 import { GroqProvider } from './providers/groq.js';
 import { TogetherProvider } from './providers/together.js';
+import { AnthropicProvider } from './providers/anthropic.js';
 import { getToolRegistry, getToolDefinitions, parseTextToolCalls } from './tools.js';
 import { summarizeSegment } from './summarize.js';
 import { runTurn } from '../core/runTurn.js';
@@ -13,7 +14,17 @@ import { countTokens, countMessageTokens } from './utils/tokenizer.js';
 export class RefAgent {
   constructor(opts = {}) {
     this.dataDir = opts.dataDir || './cognitron08-data';
-    this.model = 'openai/gpt-oss-120b';
+    this.providerName = (opts.provider || 'mock').toLowerCase();
+
+    // Set default model based on provider
+    const defaultModels = {
+      'anthropic': 'claude-sonnet-4-20250514',
+      'groq': 'openai/gpt-oss-120b',
+      'together': 'openai/gpt-oss-120b',
+      'mock': 'mock-model'
+    };
+    this.model = opts.model || defaultModels[this.providerName] || 'openai/gpt-oss-120b';
+
     this.supportsTools = true;
     this.temperature = opts.temperature ?? 0.7;
     this.maxTokens = opts.maxTokens ?? 2000;
@@ -39,7 +50,6 @@ export class RefAgent {
     this.personaText = '';
     this.personaName = null;
 
-    this.providerName = (opts.provider || 'mock').toLowerCase();
     this.provider = null;
   }
 
@@ -50,10 +60,29 @@ export class RefAgent {
     if (this.providerName === 'mock') { this.provider = new MockProvider(); console.log(chalk.green('✅ Using mock provider (offline)')); return; }
     const groqKey = process.env.GROQ_API_KEY;
     const togetherKey = process.env.TOGETHER_API_KEY;
-    if (this.providerName === 'groq') {
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+    if (this.providerName === 'anthropic') {
+      if (anthropicKey) {
+        const anthropic = new AnthropicProvider(anthropicKey, this.model, this.temperature, this.maxTokens);
+        if (anthropic.ok) this.provider = anthropic;
+      }
+      if (!this.provider && groqKey) {
+        const groq = new GroqProvider(groqKey, this.model, this.temperature, this.maxTokens);
+        if (groq.ok) { this.providerName = 'groq'; this.provider = groq; console.log(chalk.cyan('🔄 Switched to Groq (Anthropic unavailable)')); }
+      }
+      if (!this.provider && togetherKey) {
+        const tog = new TogetherProvider(togetherKey, this.model, this.temperature, this.maxTokens);
+        if (tog.ok) { this.providerName = 'together'; this.provider = tog; console.log(chalk.cyan('🔄 Switched to Together (Anthropic unavailable)')); }
+      }
+    } else if (this.providerName === 'groq') {
       if (groqKey) {
         const groq = new GroqProvider(groqKey, this.model, this.temperature, this.maxTokens);
         if (groq.ok) this.provider = groq;
+      }
+      if (!this.provider && anthropicKey) {
+        const anthropic = new AnthropicProvider(anthropicKey, this.model, this.temperature, this.maxTokens);
+        if (anthropic.ok) { this.providerName = 'anthropic'; this.provider = anthropic; console.log(chalk.cyan('🔄 Switched to Anthropic (Groq unavailable)')); }
       }
       if (!this.provider && togetherKey) {
         const tog = new TogetherProvider(togetherKey, this.model, this.temperature, this.maxTokens);
@@ -64,13 +93,80 @@ export class RefAgent {
         const tog = new TogetherProvider(togetherKey, this.model, this.temperature, this.maxTokens);
         if (tog.ok) this.provider = tog;
       }
+      if (!this.provider && anthropicKey) {
+        const anthropic = new AnthropicProvider(anthropicKey, this.model, this.temperature, this.maxTokens);
+        if (anthropic.ok) { this.providerName = 'anthropic'; this.provider = anthropic; console.log(chalk.cyan('🔄 Switched to Anthropic (Together unavailable)')); }
+      }
       if (!this.provider && groqKey) {
         const groq = new GroqProvider(groqKey, this.model, this.temperature, this.maxTokens);
         if (groq.ok) { this.providerName = 'groq'; this.provider = groq; console.log(chalk.cyan('🔄 Switched to Groq (Together unavailable)')); }
       }
     }
-    if (!this.provider) throw new Error('No providers available! Set GROQ_API_KEY or TOGETHER_API_KEY');
+    if (!this.provider) throw new Error('No providers available! Set ANTHROPIC_API_KEY, GROQ_API_KEY, or TOGETHER_API_KEY');
     console.log(chalk.green(`✅ Using provider: ${this.providerName}`));
+  }
+
+  async switchProvider(newProvider) {
+    const providerName = newProvider.toLowerCase();
+    if (providerName === this.providerName) {
+      console.log(chalk.yellow(`⚠️  Already using ${providerName}`));
+      return;
+    }
+
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
+    const togetherKey = process.env.TOGETHER_API_KEY;
+
+    let newProviderInstance = null;
+
+    // Update default model when switching providers
+    const defaultModels = {
+      'anthropic': 'claude-sonnet-4-20250514',
+      'groq': 'openai/gpt-oss-120b',
+      'together': 'openai/gpt-oss-120b',
+      'mock': 'mock-model'
+    };
+
+    switch (providerName) {
+      case 'anthropic':
+        if (!anthropicKey) {
+          console.log(chalk.red('❌ ANTHROPIC_API_KEY not set'));
+          return;
+        }
+        newProviderInstance = new AnthropicProvider(anthropicKey, defaultModels.anthropic, this.temperature, this.maxTokens);
+        break;
+      case 'groq':
+        if (!groqKey) {
+          console.log(chalk.red('❌ GROQ_API_KEY not set'));
+          return;
+        }
+        newProviderInstance = new GroqProvider(groqKey, defaultModels.groq, this.temperature, this.maxTokens);
+        break;
+      case 'together':
+        if (!togetherKey) {
+          console.log(chalk.red('❌ TOGETHER_API_KEY not set'));
+          return;
+        }
+        newProviderInstance = new TogetherProvider(togetherKey, defaultModels.together, this.temperature, this.maxTokens);
+        break;
+      case 'mock':
+        newProviderInstance = new MockProvider();
+        break;
+      default:
+        console.log(chalk.red(`❌ Unknown provider: ${providerName}`));
+        console.log(chalk.gray('Available providers: anthropic, groq, together, mock'));
+        return;
+    }
+
+    if (newProviderInstance && newProviderInstance.ok) {
+      this.provider = newProviderInstance;
+      this.providerName = providerName;
+      this.model = defaultModels[providerName] || this.model;
+      console.log(chalk.green(`✅ Switched to provider: ${providerName}`));
+      console.log(chalk.gray(`   Model: ${this.model}`));
+    } else {
+      console.log(chalk.red(`❌ Failed to initialize ${providerName} provider`));
+    }
   }
 
   async loadPersona(text, name = null) { this.personaText = (text || '').trim(); this.personaName = name || null; }

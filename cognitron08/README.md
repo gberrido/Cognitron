@@ -24,9 +24,16 @@ node cli/index.js --provider mock
 Run CLI (live):
 
 ```bash
+# Anthropic (Claude Sonnet 4.5 or Haiku 4.5)
+export ANTHROPIC_API_KEY=...
+node cli/index.js --provider anthropic
+node cli/index.js --provider anthropic --model claude-sonnet-4-20250514  # Sonnet 4.5 (default)
+node cli/index.js --provider anthropic --model claude-haiku-4-20250611   # Haiku 4.5
+
+# Groq or Together AI
 export GROQ_API_KEY=...
 export TOGETHER_API_KEY=...
-node cli/index.js --provider groq   # or --provider together
+node cli/index.js --provider groq      # or --provider together
 ```
 
 ## Kernel API
@@ -71,7 +78,7 @@ console.log(res.finalMessage); // "Done."
 
 The reference CLI (`cli/index.js`) mirrors the Cognitron07 CLI:
 
-- Commands: `/help`, `/provider <groq|together|mock>`, `/memory`, `/compact`, `/stream`, `/think`, `/autosum`, `/debugtools`, `/recall "<q>" [page] [size]`, `/arch "<q>" [page] [size]`, `/status`, `/clear`, `/reset`, `/exit`.
+- Commands: `/help`, `/provider <anthropic|groq|together|mock>`, `/memory`, `/compact`, `/stream`, `/think`, `/autosum`, `/debugtools`, `/recall "<q>" [page] [size]`, `/arch "<q>" [page] [size]`, `/status`, `/clear`, `/reset`, `/exit`.
 - Output: Provider status, toggle states, memory-ops block (per tool result), and the `💬 AI Response:` header. Streaming matches 07 (final turn only, non-mock providers).
 
 Piped example:

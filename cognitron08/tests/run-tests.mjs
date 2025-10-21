@@ -11,6 +11,7 @@ const tests = [
   './ref/test_recall_store.mjs',
   './ref/test_archival_store.mjs',
   './ref/test_session_store.mjs',
+  './ref/test_anthropic_provider.mjs',
   './ref/test_cli_mock.mjs',
   './ref/test_cli_golden_mock.mjs',
   './ref/test_cli_golden_normalized.mjs',

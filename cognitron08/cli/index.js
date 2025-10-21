@@ -46,7 +46,8 @@ async function main() {
     .name('cognitron08')
     .description('MemGPT-style AI Assistant (reference kernel-based)')
     .version('0.1.0')
-    .option('--provider <provider>', 'LLM provider (mock only in ref)', 'mock')
+    .option('--provider <provider>', 'LLM provider (anthropic, groq, together, mock)', 'mock')
+    .option('--model <model>', 'Model name (e.g., claude-sonnet-4-20250514, claude-haiku-4-20250611)')
     .option('--temperature <temperature>', 'Sampling temperature')
     .option('--max-tokens <maxTokens>', 'Max tokens for completion')
     .option('--persona <file>', 'Path to persona text file')
@@ -55,6 +56,7 @@ async function main() {
       const opts = program.opts();
       const agent = new RefAgent({
         provider: (opts.provider || 'mock').toLowerCase(),
+        model: opts.model,
         temperature: Number(opts.temperature) || 0.7,
         maxTokens: Number(opts.maxTokens) || 2000,
         dataDir: './cognitron08-data',
@@ -204,7 +206,7 @@ async function handleCommand(agent, cmd) {
     case '/help':
       console.log(chalk.cyan('\n📚 Commands:'));
       console.log('  /help     - Show this help');
-      console.log('  /provider - Switch provider (mock only here)');
+      console.log('  /provider <name> - Switch provider (anthropic, groq, together, mock)');
       console.log('  /memory   - Show memory state');
       console.log('  /compact  - Force compaction');
       console.log('  /stream   - Toggle token streaming');
