@@ -13,7 +13,7 @@ async function main() {
     .name('cognitron07')
     .description('MemGPT-style AI Assistant (SDK-backed)')
     .version('1.0.0')
-    .option('--provider <provider>', 'LLM provider (groq|together|mock)', 'groq')
+    .option('--provider <provider>', 'LLM provider (anthropic|groq|together|mock)', 'anthropic')
     .option('--temperature <temperature>', 'Sampling temperature')
     .option('--max-tokens <maxTokens>', 'Max tokens for completion')
     .option('--persona <file>', 'Path to persona text file')
@@ -21,7 +21,7 @@ async function main() {
     .action(async () => {
       const opts = program.opts();
       const agent = new MemGPTAgent({
-        provider: (opts.provider || 'groq').toLowerCase(),
+        provider: (opts.provider || 'anthropic').toLowerCase(),
         temperature: Number(opts.temperature) || 0.7,
         maxTokens: Number(opts.maxTokens) || 2000,
         dataDir: './cognitron-memgpt-data',
@@ -117,7 +117,7 @@ async function handleCommand(agent, cmd) {
     case '/help':
       console.log(chalk.cyan('\n📚 Commands:'));
       console.log('  /help     - Show this help');
-      console.log('  /provider - Switch provider (groq|together|mock)');
+      console.log('  /provider - Switch provider (anthropic|groq|together|mock)');
       console.log('  /memory   - Show memory state');
       console.log('  /compact  - Force compaction');
       console.log('  /stream   - Toggle token streaming');

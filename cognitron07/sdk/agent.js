@@ -13,8 +13,8 @@ import { MockProvider } from './providers/mock.js';
 export class MemGPTAgent {
   constructor(opts = {}) {
     this.dataDir = opts.dataDir || './cognitron-memgpt-data';
-    this.model = 'openai/gpt-oss-120b';
-    this.supportsTools = true; // gpt-oss-120b supports tool_calls per your findings
+    this.model = 'claude-haiku-4.5-20251015';
+    this.supportsTools = true; // claude-haiku-4.5 supports tool_calls
     this.temperature = opts.temperature ?? 0.7;
     this.maxTokens = opts.maxTokens ?? 2000;
     this.maxContext = 8192;
@@ -44,7 +44,7 @@ export class MemGPTAgent {
     this.personaText = '';
     this.personaName = null;
 
-    this.providerName = (opts.provider || 'groq').toLowerCase();
+    this.providerName = (opts.provider || 'anthropic').toLowerCase();
     this.provider = null;
 
     // Tokenizer (optional, falls back to chars/4)

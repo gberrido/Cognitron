@@ -4,16 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Cognitron07 is a MemGPT-style AI assistant with persistent memory capabilities. It uses an SDK-based architecture and supports multiple LLM providers (Groq, Together AI, Mock). The system implements sophisticated memory management with recall, archival storage, and context window budgeting.
+Cognitron07 is a MemGPT-style AI assistant with persistent memory capabilities. It uses an SDK-based architecture and supports multiple LLM providers (Anthropic, Groq, Together AI, Mock). The system implements sophisticated memory management with recall, archival storage, and context window budgeting.
 
 ## Development Commands
 
 ### Running the CLI
 ```bash
-# Interactive mode with default provider (Groq)
+# Interactive mode with default provider (Anthropic - Claude Haiku 4.5)
 node cli/index.js
 
 # With specific provider
+node cli/index.js --provider anthropic
 node cli/index.js --provider groq
 node cli/index.js --provider together
 node cli/index.js --provider mock
@@ -51,6 +52,7 @@ node tests/test_recall_archival.mjs
 - `session.js` - SessionStore for core memory and session state persistence
 
 **Providers (`/sdk/providers/`)**:
+- `anthropic.js` - Anthropic Claude API integration with streaming support (default)
 - `groq.js` - Groq API integration with streaming support
 - `together.js` - Together AI API integration
 - `mock.js` - Mock provider for testing
@@ -103,7 +105,7 @@ Token budgets are enforced with automatic summarization:
 
 ```bash
 /help         # Show all commands
-/provider <p> # Switch provider (groq|together|mock)
+/provider <p> # Switch provider (anthropic|groq|together|mock)
 /memory       # Show memory state
 /status       # Show provider status and settings
 /recall <q>   # Search conversation history
@@ -121,6 +123,7 @@ Token budgets are enforced with automatic summarization:
 ## Development Guidelines
 
 ### Environment Variables
+- `ANTHROPIC_API_KEY` - Required for Anthropic provider (default)
 - `GROQ_API_KEY` - Required for Groq provider
 - `TOGETHER_API_KEY` - Required for Together AI provider
 

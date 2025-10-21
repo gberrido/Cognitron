@@ -1,7 +1,7 @@
 {
   "name": "cognitron",
   "version": "1.0.0",
-  "description": "A CLI chat agent powered by Groq and OpenAI GPT-OSS-120B",
+  "description": "A CLI chat agent powered by Anthropic Claude Haiku 4.5 and other LLM providers",
   "main": "cognitron04.js",
   "type": "module",
   "bin": {
@@ -24,6 +24,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "groq-sdk": "^0.7.0",
