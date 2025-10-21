@@ -6,6 +6,40 @@ import path from 'path';
 import fs from 'fs/promises';
 import { RefAgent } from '../ref/agent.js';
 
+// Global shutdown state
+let isShuttingDown = false;
+let shutdownHandled = false;
+
+/**
+ * Graceful shutdown handler
+ */
+async function gracefulShutdown(signal, agent, rl) {
+  if (shutdownHandled) return;
+  shutdownHandled = true;
+
+  console.log(chalk.yellow(`\n\n⚠️  Received ${signal}, shutting down gracefully...`));
+
+  try {
+    // Close readline interface if it exists
+    if (rl) {
+      rl.close();
+    }
+
+    // Save agent state
+    if (agent) {
+      console.log(chalk.gray('💾 Saving memory...'));
+      await agent.saveState();
+      console.log(chalk.green('✅ Memory saved!'));
+    }
+
+    console.log(chalk.gray('👋 Goodbye!'));
+    process.exit(0);
+  } catch (err) {
+    console.error(chalk.red(`❌ Error during shutdown: ${err.message}`));
+    process.exit(1);
+  }
+}
+
 async function main() {
   const program = new Command();
   program
@@ -33,11 +67,34 @@ async function main() {
 
       if (opts.persona) {
         try {
-          const p = path.resolve(opts.persona);
-          const content = await fs.readFile(p, 'utf8');
-          await agent.loadPersona(content, path.basename(p));
-          console.log(chalk.magenta(`🎭 Loaded persona: ${path.basename(p)}`));
-        } catch (e) { console.log(chalk.yellow(`⚠️ Failed to load persona: ${e.message}`)); }
+          // Resolve the persona path
+          const personaPath = path.resolve(opts.persona);
+          const cwd = process.cwd();
+
+          // Security: Prevent path traversal attacks
+          // Only allow files within the current working directory or its subdirectories
+          if (!personaPath.startsWith(cwd + path.sep) && personaPath !== cwd) {
+            throw new Error('Persona file must be within the current working directory');
+          }
+
+          // Additional validation: Check file extension
+          const ext = path.extname(personaPath).toLowerCase();
+          if (!['.txt', '.md', ''].includes(ext)) {
+            console.log(chalk.yellow(`⚠️ Warning: Persona file has unusual extension: ${ext}`));
+          }
+
+          const content = await fs.readFile(personaPath, 'utf8');
+
+          // Validate content size (prevent loading huge files)
+          if (content.length > 50000) {
+            throw new Error('Persona file too large (max 50KB)');
+          }
+
+          await agent.loadPersona(content, path.basename(personaPath));
+          console.log(chalk.magenta(`🎭 Loaded persona: ${path.basename(personaPath)}`));
+        } catch (e) {
+          console.log(chalk.yellow(`⚠️ Failed to load persona: ${e.message}`));
+        }
       }
 
       await agent.loadState();
@@ -91,6 +148,12 @@ async function main() {
       // SCRIPT MODE END
 
       const rl = readline.createInterface({ input: process.stdin, output: process.stdout, prompt: chalk.cyan('> ') });
+
+      // Set up graceful shutdown handlers
+      const shutdownHandler = (signal) => gracefulShutdown(signal, agent, rl);
+      process.on('SIGINT', () => shutdownHandler('SIGINT'));
+      process.on('SIGTERM', () => shutdownHandler('SIGTERM'));
+
       rl.prompt();
 
       const handleLine = async (line) => {
@@ -118,7 +181,14 @@ async function main() {
       };
       let chain = Promise.resolve();
       rl.on('line', (line) => { chain = chain.then(() => handleLine(line)).catch(() => {}); });
-      rl.on('close', async () => { console.log(chalk.gray('\n💾 Saving memory...')); await agent.saveState(); console.log(chalk.green('✅ Memory saved!')); console.log(chalk.gray('👋 Goodbye!')); process.exit(0); });
+      rl.on('close', async () => {
+        if (!shutdownHandled) {
+          console.log(chalk.gray('\n💾 Saving memory...'));
+          await agent.saveState();
+          console.log(chalk.green('✅ Memory saved!'));
+          console.log(chalk.gray('👋 Goodbye!'));
+        }
+      });
     });
 
   await program.parseAsync(process.argv);

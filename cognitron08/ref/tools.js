@@ -1,34 +1,147 @@
 export function getToolRegistry(agent) {
   return {
     core_memory_append: async ({ key, value }) => {
-      agent.coreMemory.set(key, { value, timestamp: new Date().toISOString() });
-      await agent.persistWorking();
-      return { success: true, message: `Stored in core memory: ${key} = ${value}` };
+      // Validate key
+      if (!key || typeof key !== 'string') {
+        return { success: false, message: 'Invalid key: must be a non-empty string' };
+      }
+      if (key.length > 100) {
+        return { success: false, message: 'Invalid key: maximum length is 100 characters' };
+      }
+
+      // Validate value
+      if (value === undefined || value === null || typeof value !== 'string') {
+        return { success: false, message: 'Invalid value: must be a string' };
+      }
+      if (value.length > 2000) {
+        return { success: false, message: 'Invalid value: maximum length is 2000 characters' };
+      }
+
+      try {
+        agent.coreMemory.set(key, { value, timestamp: new Date().toISOString() });
+        await agent.persistWorking();
+        return { success: true, message: `Stored in core memory: ${key} = ${value}` };
+      } catch (err) {
+        return { success: false, message: `Failed to store: ${err.message}` };
+      }
     },
+
     core_memory_replace: async ({ key, new_value }) => {
-      if (!agent.coreMemory.has(key)) return { success: false, message: `Key not found: ${key}` };
-      agent.coreMemory.set(key, { value: new_value, timestamp: new Date().toISOString() });
-      await agent.persistWorking();
-      return { success: true, message: `Updated: ${key} = ${new_value}` };
+      // Validate key
+      if (!key || typeof key !== 'string') {
+        return { success: false, message: 'Invalid key: must be a non-empty string' };
+      }
+      if (key.length > 100) {
+        return { success: false, message: 'Invalid key: maximum length is 100 characters' };
+      }
+
+      // Check if key exists
+      if (!agent.coreMemory.has(key)) {
+        return { success: false, message: `Key not found: ${key}` };
+      }
+
+      // Validate new_value
+      if (new_value === undefined || new_value === null || typeof new_value !== 'string') {
+        return { success: false, message: 'Invalid value: must be a string' };
+      }
+      if (new_value.length > 2000) {
+        return { success: false, message: 'Invalid value: maximum length is 2000 characters' };
+      }
+
+      try {
+        agent.coreMemory.set(key, { value: new_value, timestamp: new Date().toISOString() });
+        await agent.persistWorking();
+        return { success: true, message: `Updated: ${key} = ${new_value}` };
+      } catch (err) {
+        return { success: false, message: `Failed to update: ${err.message}` };
+      }
     },
+
     conversation_search: async ({ query, max_results = 5 }) => {
-      const res = await agent.recall.search(query, 1, max_results);
-      return { success: true, message: `Found ${res.length} results for "${query}"`, data: res };
+      // Validate query
+      if (!query || typeof query !== 'string') {
+        return { success: false, message: 'Invalid query: must be a non-empty string' };
+      }
+      if (query.length > 500) {
+        return { success: false, message: 'Invalid query: maximum length is 500 characters' };
+      }
+
+      // Validate max_results
+      if (typeof max_results !== 'number' || max_results < 1 || max_results > 100) {
+        max_results = 5; // Use default if invalid
+      }
+
+      try {
+        const res = await agent.recall.search(query, 1, Math.floor(max_results));
+        return { success: true, message: `Found ${res.length} results for "${query}"`, data: res };
+      } catch (err) {
+        return { success: false, message: `Search failed: ${err.message}` };
+      }
     },
+
     archival_memory_insert: async ({ title, content }) => {
-      const id = await agent.archival.insert(title || 'Untitled', content || '');
-      return { success: true, message: `Stored doc ${id} (${title || 'Untitled'})` };
+      // Validate title
+      if (!title || typeof title !== 'string') {
+        return { success: false, message: 'Invalid title: must be a non-empty string' };
+      }
+      if (title.length > 200) {
+        return { success: false, message: 'Invalid title: maximum length is 200 characters' };
+      }
+
+      // Validate content
+      if (!content || typeof content !== 'string') {
+        return { success: false, message: 'Invalid content: must be a non-empty string' };
+      }
+      if (content.length > 50000) {
+        return { success: false, message: 'Invalid content: maximum length is 50000 characters' };
+      }
+
+      try {
+        const id = await agent.archival.insert(title, content);
+        return { success: true, message: `Stored doc ${id} (${title})` };
+      } catch (err) {
+        return { success: false, message: `Failed to insert: ${err.message}` };
+      }
     },
+
     archival_memory_search: async ({ query }) => {
-      const res = await agent.archival.search(query || '', 1, 5);
-      return { success: true, message: `Found ${res.length} results for "${query}"`, data: res };
+      // Validate query
+      if (!query || typeof query !== 'string') {
+        return { success: false, message: 'Invalid query: must be a non-empty string' };
+      }
+      if (query.length > 500) {
+        return { success: false, message: 'Invalid query: maximum length is 500 characters' };
+      }
+
+      try {
+        const res = await agent.archival.search(query, 1, 5);
+        return { success: true, message: `Found ${res.length} results for "${query}"`, data: res };
+      } catch (err) {
+        return { success: false, message: `Search failed: ${err.message}` };
+      }
     },
+
     get_memory_status: async () => {
-      const usage = agent.getTokenUsage();
-      const arch = await agent.archival.count();
-      return { success: true, message: `Memory: ${usage.total}/${agent.maxContext} tokens, Core facts: ${agent.coreMemory.size}, Archival: ${arch}` };
+      try {
+        const usage = agent.getTokenUsage();
+        const arch = await agent.archival.count();
+        return { success: true, message: `Memory: ${usage.total}/${agent.maxContext} tokens, Core facts: ${agent.coreMemory.size}, Archival: ${arch}` };
+      } catch (err) {
+        return { success: false, message: `Failed to get status: ${err.message}` };
+      }
     },
-    pause_heartbeats: async ({ message }) => ({ success: true, message: message || 'Pausing', pause: true })
+
+    pause_heartbeats: async ({ message }) => {
+      // Validate message (optional parameter)
+      if (message !== undefined && typeof message !== 'string') {
+        return { success: false, message: 'Invalid message: must be a string' };
+      }
+      if (message && message.length > 1000) {
+        return { success: false, message: 'Invalid message: maximum length is 1000 characters' };
+      }
+
+      return { success: true, message: message || 'Pausing', pause: true };
+    }
   };
 }
 

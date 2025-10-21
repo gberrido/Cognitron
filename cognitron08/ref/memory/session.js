@@ -10,15 +10,53 @@ export class SessionStore {
   }
   async ensure() { await fs.mkdir(this.dataDir, { recursive: true }); }
   async loadWorking() {
-    try { const d = JSON.parse(await fs.readFile(this.workingFile, 'utf8')); return new Map(d.entries || []); } catch { return new Map(); }
+    try {
+      const data = await fs.readFile(this.workingFile, 'utf8');
+      const parsed = JSON.parse(data);
+      return new Map(parsed.entries || []);
+    } catch (err) {
+      return new Map();
+    }
   }
+
   async saveWorking(map) {
-    await fs.writeFile(this.workingFile, JSON.stringify({ entries: Array.from(map.entries()), lastUpdated: new Date().toISOString() }, null, 2));
+    const tmpFile = `${this.workingFile}.tmp`;
+    try {
+      const data = {
+        entries: Array.from(map.entries()),
+        lastUpdated: new Date().toISOString()
+      };
+      // Atomic write: write to temp file, then rename
+      await fs.writeFile(tmpFile, JSON.stringify(data, null, 2), 'utf8');
+      await fs.rename(tmpFile, this.workingFile);
+    } catch (err) {
+      // Clean up temp file on error
+      try { await fs.unlink(tmpFile); } catch {}
+      throw new Error(`Failed to save working context: ${err.message}`);
+    }
   }
+
   async loadSession() {
-    try { return JSON.parse(await fs.readFile(this.sessionFile, 'utf8')); } catch { return {}; }
+    try {
+      const data = await fs.readFile(this.sessionFile, 'utf8');
+      return JSON.parse(data);
+    } catch (err) {
+      return {};
+    }
   }
-  async saveSession(state) { await fs.writeFile(this.sessionFile, JSON.stringify(state, null, 2)); }
+
+  async saveSession(state) {
+    const tmpFile = `${this.sessionFile}.tmp`;
+    try {
+      // Atomic write: write to temp file, then rename
+      await fs.writeFile(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+      await fs.rename(tmpFile, this.sessionFile);
+    } catch (err) {
+      // Clean up temp file on error
+      try { await fs.unlink(tmpFile); } catch {}
+      throw new Error(`Failed to save session state: ${err.message}`);
+    }
+  }
   async loadRecentConversation(n = 50) {
     try {
       const content = await fs.readFile(this.recallFile, 'utf8');
@@ -28,8 +66,21 @@ export class SessionStore {
     } catch { return []; }
   }
   async resetNonArchival() {
-    for (const f of ['working-context.json', 'recall-storage.jsonl', 'session-state.json']) {
-      try { await fs.unlink(path.join(this.dataDir, f)); } catch {}
+    const filesToDelete = [
+      'working-context.json',
+      'recall-storage.jsonl',
+      'recall-index.json',
+      'session-state.json'
+    ];
+    for (const f of filesToDelete) {
+      try {
+        await fs.unlink(path.join(this.dataDir, f));
+      } catch (err) {
+        // Ignore if file doesn't exist
+        if (err.code !== 'ENOENT') {
+          console.warn(`Failed to delete ${f}: ${err.message}`);
+        }
+      }
     }
   }
 }
