@@ -8,6 +8,7 @@ export class ArchivalStore {
     this.docs = path.join(this.base, 'documents');
     this.metaFile = path.join(this.base, 'metadata.json');
     this.indexFile = path.join(this.base, 'embeddings.json');
+    this._writeQueue = Promise.resolve(); // Serialize writes to prevent race conditions
   }
   async ensure() {
     await fs.mkdir(this.docs, { recursive: true });
@@ -25,9 +26,7 @@ export class ArchivalStore {
     }
   }
   async insert(title, content) {
-    await this.ensure();
-
-    // Validate and sanitize inputs
+    // Validate inputs before queueing
     if (!title || typeof title !== 'string') {
       throw new Error('Title must be a non-empty string');
     }
@@ -35,50 +34,57 @@ export class ArchivalStore {
       throw new Error('Content must be a non-empty string');
     }
 
-    // Sanitize title for safe filename usage
-    const sanitizeFilename = (str) => str.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 100);
-    const safeTitle = sanitizeFilename(title);
+    // Queue writes to prevent concurrent access issues
+    this._writeQueue = this._writeQueue.then(async () => {
+      await this.ensure();
 
-    const id = `doc_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-    const filename = `${id}_${safeTitle}.txt`;
-    const filepath = path.join(this.docs, filename);
+      // Sanitize title for safe filename usage
+      const sanitizeFilename = (str) => str.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 100);
+      const safeTitle = sanitizeFilename(title);
 
-    const tmpMetaFile = `${this.metaFile}.tmp`;
-    const tmpIndexFile = `${this.indexFile}.tmp`;
+      const id = `doc_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+      const filename = `${id}_${safeTitle}.txt`;
+      const filepath = path.join(this.docs, filename);
 
-    try {
-      // Write document content first
-      await fs.writeFile(filepath, content, 'utf8');
+      const tmpMetaFile = `${this.metaFile}.tmp`;
+      const tmpIndexFile = `${this.indexFile}.tmp`;
 
-      // Update metadata atomically
-      const metaData = await fs.readFile(this.metaFile, 'utf8').catch(() => '{"documents":[]}');
-      const meta = JSON.parse(metaData);
-      meta.documents = meta.documents || [];
-      meta.documents.push({
-        id,
-        title,
-        file: filename,
-        timestamp: new Date().toISOString(),
-        length: content.length
-      });
-      await fs.writeFile(tmpMetaFile, JSON.stringify(meta, null, 2), 'utf8');
-      await fs.rename(tmpMetaFile, this.metaFile);
+      try {
+        // Write document content first
+        await fs.writeFile(filepath, content, 'utf8');
 
-      // Update index atomically
-      const indexData = await fs.readFile(this.indexFile, 'utf8').catch(() => '{"df":{},"docs":{}}');
-      const idx = JSON.parse(indexData);
-      addToIndex(idx, id, content);
-      await fs.writeFile(tmpIndexFile, JSON.stringify(idx, null, 2), 'utf8');
-      await fs.rename(tmpIndexFile, this.indexFile);
+        // Update metadata atomically
+        const metaData = await fs.readFile(this.metaFile, 'utf8').catch(() => '{"documents":[]}');
+        const meta = JSON.parse(metaData);
+        meta.documents = meta.documents || [];
+        meta.documents.push({
+          id,
+          title,
+          file: filename,
+          timestamp: new Date().toISOString(),
+          length: content.length
+        });
+        await fs.writeFile(tmpMetaFile, JSON.stringify(meta, null, 2), 'utf8');
+        await fs.rename(tmpMetaFile, this.metaFile);
 
-      return id;
-    } catch (err) {
-      // Clean up on error
-      try { await fs.unlink(filepath); } catch {}
-      try { await fs.unlink(tmpMetaFile); } catch {}
-      try { await fs.unlink(tmpIndexFile); } catch {}
-      throw new Error(`Failed to insert document: ${err.message}`);
-    }
+        // Update index atomically
+        const indexData = await fs.readFile(this.indexFile, 'utf8').catch(() => '{"df":{},"docs":{}}');
+        const idx = JSON.parse(indexData);
+        addToIndex(idx, id, content);
+        await fs.writeFile(tmpIndexFile, JSON.stringify(idx, null, 2), 'utf8');
+        await fs.rename(tmpIndexFile, this.indexFile);
+
+        return id;
+      } catch (err) {
+        // Clean up on error
+        try { await fs.unlink(filepath); } catch {}
+        try { await fs.unlink(tmpMetaFile); } catch {}
+        try { await fs.unlink(tmpIndexFile); } catch {}
+        throw new Error(`Failed to insert document: ${err.message}`);
+      }
+    });
+
+    return this._writeQueue;
   }
   async search(query, page = 1, size = 5) {
     try {

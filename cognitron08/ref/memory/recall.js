@@ -124,13 +124,16 @@ export class RecallStore {
       const content = await fs.readFile(this.file, 'utf8').catch(() => '');
       const lines = content ? content.split('\n').filter(Boolean) : [];
       const map = new Map();
+      const idMap = new Map(); // Map to preserve original ID types
 
       for (const line of lines) {
         try {
           const rec = JSON.parse(line);
           if (rec.id !== undefined) {
             // Store with string key to match JSON index keys
-            map.set(String(rec.id), rec.content || '');
+            const strId = String(rec.id);
+            map.set(strId, rec.content || '');
+            idMap.set(strId, rec.id); // Preserve original ID type (number or string)
           }
         } catch (err) {
           // Skip malformed lines
@@ -139,7 +142,7 @@ export class RecallStore {
       }
 
       return hits.map(h => ({
-        id: h.docId,
+        id: idMap.get(String(h.docId)) ?? h.docId, // Preserve original ID type
         score: h.score,
         content: map.get(String(h.docId)) || '',
         meta: h.meta || {}

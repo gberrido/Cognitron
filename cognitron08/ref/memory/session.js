@@ -7,6 +7,8 @@ export class SessionStore {
     this.sessionFile = path.join(dataDir, 'session-state.json');
     this.workingFile = path.join(dataDir, 'working-context.json');
     this.recallFile = path.join(dataDir, 'recall-storage.jsonl');
+    this._workingQueue = Promise.resolve(); // Serialize working context writes
+    this._sessionQueue = Promise.resolve(); // Serialize session state writes
   }
   async ensure() { await fs.mkdir(this.dataDir, { recursive: true }); }
   async loadWorking() {
@@ -20,20 +22,26 @@ export class SessionStore {
   }
 
   async saveWorking(map) {
-    const tmpFile = `${this.workingFile}.tmp`;
-    try {
-      const data = {
-        entries: Array.from(map.entries()),
-        lastUpdated: new Date().toISOString()
-      };
-      // Atomic write: write to temp file, then rename
-      await fs.writeFile(tmpFile, JSON.stringify(data, null, 2), 'utf8');
-      await fs.rename(tmpFile, this.workingFile);
-    } catch (err) {
-      // Clean up temp file on error
-      try { await fs.unlink(tmpFile); } catch {}
-      throw new Error(`Failed to save working context: ${err.message}`);
-    }
+    // Queue writes to prevent concurrent access issues
+    this._workingQueue = this._workingQueue.then(async () => {
+      await this.ensure();
+      const tmpFile = `${this.workingFile}.tmp`;
+      try {
+        const data = {
+          entries: Array.from(map.entries()),
+          lastUpdated: new Date().toISOString()
+        };
+        // Atomic write: write to temp file, then rename
+        await fs.writeFile(tmpFile, JSON.stringify(data, null, 2), 'utf8');
+        await fs.rename(tmpFile, this.workingFile);
+      } catch (err) {
+        // Clean up temp file on error
+        try { await fs.unlink(tmpFile); } catch {}
+        throw new Error(`Failed to save working context: ${err.message}`);
+      }
+    });
+
+    return this._workingQueue;
   }
 
   async loadSession() {
@@ -46,16 +54,22 @@ export class SessionStore {
   }
 
   async saveSession(state) {
-    const tmpFile = `${this.sessionFile}.tmp`;
-    try {
-      // Atomic write: write to temp file, then rename
-      await fs.writeFile(tmpFile, JSON.stringify(state, null, 2), 'utf8');
-      await fs.rename(tmpFile, this.sessionFile);
-    } catch (err) {
-      // Clean up temp file on error
-      try { await fs.unlink(tmpFile); } catch {}
-      throw new Error(`Failed to save session state: ${err.message}`);
-    }
+    // Queue writes to prevent concurrent access issues
+    this._sessionQueue = this._sessionQueue.then(async () => {
+      await this.ensure();
+      const tmpFile = `${this.sessionFile}.tmp`;
+      try {
+        // Atomic write: write to temp file, then rename
+        await fs.writeFile(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+        await fs.rename(tmpFile, this.sessionFile);
+      } catch (err) {
+        // Clean up temp file on error
+        try { await fs.unlink(tmpFile); } catch {}
+        throw new Error(`Failed to save session state: ${err.message}`);
+      }
+    });
+
+    return this._sessionQueue;
   }
   async loadRecentConversation(n = 50) {
     try {

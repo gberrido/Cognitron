@@ -11,6 +11,16 @@ function runCLI(lines = []) {
     let out = '', err = '';
     child.stdout.on('data', (d) => { out += d.toString(); });
     child.stderr.on('data', (d) => { err += d.toString(); });
+
+    // Handle stdin errors (EPIPE when child closes early)
+    child.stdin.on('error', (e) => {
+      if (e.code === 'EPIPE') {
+        // Ignore EPIPE - child process closed stdin
+      } else {
+        console.error('stdin error:', e);
+      }
+    });
+
     child.on('close', (code) => {
       if (code !== 0) return reject(new Error(`CLI exited ${code}
 STDERR:
@@ -23,8 +33,18 @@ ${out}`));
     const script = [...lines, '/exit'];
     let i = 0;
     const iv = setInterval(() => {
-      if (i >= script.length) { clearInterval(iv); child.stdin.end(); return; }
-      child.stdin.write(script[i++] + '\n');
+      if (i >= script.length) {
+        clearInterval(iv);
+        try { child.stdin.end(); } catch {}
+        return;
+      }
+      try {
+        child.stdin.write(script[i++] + '\n');
+      } catch (err) {
+        // Ignore EPIPE errors if child already closed
+        if (err.code !== 'EPIPE') throw err;
+        clearInterval(iv);
+      }
     }, 30);
   });
 }
